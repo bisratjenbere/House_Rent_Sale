@@ -30,6 +30,7 @@
 # Kiro project files (keep local only)
 .kiro/
 
+
 # debug
 npm-debug.log*
 yarn-debug.log*
