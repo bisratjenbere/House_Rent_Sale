@@ -3,8 +3,87 @@ import { getToken } from 'next-auth/jwt';
 import { connectDB } from '@/lib/db';
 import { Property } from '@/models';
 import { createPropertySchema } from '@/types/property';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { propertySearchQuerySchema } from '@/types/property-search';
+import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { handleApiError } from '@/lib/handleApiError';
+import {
+  buildPropertyFilter,
+  buildSortStage,
+  applyCursor,
+} from '@/services/property-search.service';
+
+/**
+ * GET /api/properties
+ * Public property listing with filtering, search, and cursor-based pagination
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const clientIp = getClientIp(request);
+    const rateLimitResult = await checkRateLimit(clientIp, 100, 60);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ success: false, error: rateLimitResult.error }, { status: 429 });
+    }
+
+    const searchParams = request.nextUrl.searchParams;
+    const rawQuery = Object.fromEntries(searchParams.entries());
+    const validation = propertySearchQuerySchema.safeParse(rawQuery);
+
+    if (!validation.success) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid query parameters', details: validation.error.issues },
+        { status: 400 }
+      );
+    }
+
+    const query = validation.data;
+    await connectDB();
+
+    const filter = await buildPropertyFilter(query);
+
+    if (query.search) {
+      // Text search branch: offset-based pagination (score sort doesn't compose with cursor)
+      const skip = (query.page - 1) * query.limit;
+      const properties = await Property.find(filter, { score: { $meta: 'textScore' } })
+        .sort(buildSortStage(query))
+        .skip(skip)
+        .limit(query.limit)
+        .populate('category', 'name slug')
+        .populate('owner', 'name avatar');
+
+      const total = await Property.countDocuments(filter);
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          properties,
+          total,
+          page: query.page,
+          hasMore: skip + properties.length < total,
+          nextCursor: null,
+        },
+      });
+    }
+
+    // Cursor-based pagination branch (D9)
+    applyCursor(filter, query.cursor);
+    const properties = await Property.find(filter)
+      .sort(buildSortStage(query))
+      .limit(query.limit + 1)
+      .populate('category', 'name slug')
+      .populate('owner', 'name avatar');
+
+    const hasMore = properties.length > query.limit;
+    const trimmed = hasMore ? properties.slice(0, query.limit) : properties;
+    const nextCursor = hasMore ? trimmed[trimmed.length - 1]._id.toString() : null;
+
+    return NextResponse.json({
+      success: true,
+      data: { properties: trimmed, nextCursor, hasMore },
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
 
 /**
  * POST /api/properties
