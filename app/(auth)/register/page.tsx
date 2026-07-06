@@ -39,7 +39,7 @@ export default function RegisterPage() {
         setError(result.error || 'Registration failed');
       } else {
         setSuccess(result.message);
-        // Optionally redirect to login after a delay
+     
         setTimeout(() => {
           router.push('/login');
         }, 3000);

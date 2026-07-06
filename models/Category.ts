@@ -30,7 +30,7 @@ const CategorySchema = new Schema<ICategory>(
 );
 
 // Auto-generate slug from name if not provided
-CategorySchema.pre('save', function (next) {
+CategorySchema.pre('save', function () {
   if (!this.slug && this.name) {
     this.slug = this.name
       .toLowerCase()
@@ -39,7 +39,6 @@ CategorySchema.pre('save', function (next) {
       .replace(/\s+/g, '-')
       .replace(/-+/g, '-');
   }
-  next();
 });
 
 // Unique indexes

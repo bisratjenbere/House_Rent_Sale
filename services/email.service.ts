@@ -2,8 +2,15 @@ import { Resend } from 'resend';
 import { verificationEmailTemplate } from '@/lib/email/templates/verification';
 import { passwordResetEmailTemplate } from '@/lib/email/templates/password-reset';
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy-initialize Resend client to avoid build-time errors
+let resend: Resend | null = null;
+
+function getResendClient(): Resend {
+  if (!resend) {
+    resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resend;
+}
 
 /**
  * Send verification email to user
@@ -19,7 +26,8 @@ export async function sendVerificationEmail(
     const verifyUrl = `${process.env.NEXTAUTH_URL}/verify-email?token=${token}`;
     const html = verificationEmailTemplate(verifyUrl);
     
-    await resend.emails.send({
+    const resendClient = getResendClient();
+    await resendClient.emails.send({
       from: process.env.EMAIL_FROM!,
       to,
       subject: 'Verify Your Email Address',
@@ -50,7 +58,8 @@ export async function sendPasswordResetEmail(
     const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${token}`;
     const html = passwordResetEmailTemplate(resetUrl);
     
-    await resend.emails.send({
+    const resendClient = getResendClient();
+    await resendClient.emails.send({
       from: process.env.EMAIL_FROM!,
       to,
       subject: 'Reset Your Password',

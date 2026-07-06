@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
         {
           success: false,
           error: 'Invalid token',
-          details: validationResult.error.errors,
+          details: validationResult.error.issues,
         },
         { status: 400 }
       );

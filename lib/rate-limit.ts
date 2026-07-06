@@ -1,11 +1,18 @@
 import { Redis } from '@upstash/redis';
 import { NextRequest } from 'next/server';
 
-// Initialize Upstash Redis client
-const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL!,
-  token: process.env.UPSTASH_REDIS_REST_TOKEN!,
-});
+// Lazy-initialize Upstash Redis client to avoid build-time errors
+let redis: Redis | null = null;
+
+function getRedisClient(): Redis {
+  if (!redis) {
+    redis = new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL!,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN!,
+    });
+  }
+  return redis;
+}
 
 /**
  * Extract client IP address from request headers
@@ -40,14 +47,15 @@ export async function checkRateLimit(
   windowSeconds: number
 ): Promise<{ success: boolean; error?: string }> {
   try {
+    const redisClient = getRedisClient();
     const key = `rate_limit:${identifier}`;
 
     // Increment the counter
-    const count = await redis.incr(key);
+    const count = await redisClient.incr(key);
 
     // Set TTL on first request (when count is 1)
     if (count === 1) {
-      await redis.expire(key, windowSeconds);
+      await redisClient.expire(key, windowSeconds);
     }
 
     // Check if limit exceeded

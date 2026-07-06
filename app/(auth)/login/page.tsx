@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { loginSchema, type LoginInput } from '@/types/auth';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<string>('');
@@ -23,7 +23,6 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
   
-  // Check for verified flag in URL
   useEffect(() => {
     if (searchParams.get('verified') === 'true') {
       setSuccess('Email verified successfully! You can now log in.');
@@ -129,5 +128,13 @@ export default function LoginPage() {
         </Link>
       </p>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="bg-card p-8 rounded-lg shadow-md text-center">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

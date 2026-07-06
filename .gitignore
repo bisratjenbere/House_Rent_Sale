@@ -24,6 +24,9 @@
 .DS_Store
 *.pem
 
+# IDE
+.vscode/
+
 # Kiro project files (keep local only)
 .kiro/
 
