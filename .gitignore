@@ -24,8 +24,7 @@
 .DS_Store
 *.pem
 
-# Kiro project files (keep local only)
-.kiro/
+
 
 # debug
 npm-debug.log*
