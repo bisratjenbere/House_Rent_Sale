@@ -7,6 +7,7 @@ import {
   assertOwnerOrAdmin,
   resolveStatusAfterImageDelete,
 } from '@/services/property.service';
+import { cleanupOrphanedImages } from '@/services/cloudinary.service';
 
 /**
  * DELETE /api/properties/:id/images
@@ -15,8 +16,9 @@ import {
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
@@ -28,7 +30,7 @@ export async function DELETE(
 
     // Assert ownership or admin role
     const property = await assertOwnerOrAdmin(
-      params.id,
+      id,
       token.userId as string,
       token.role as string
     );
@@ -64,23 +66,9 @@ export async function DELETE(
     // Save property
     await property.save();
 
-    // Delete from Cloudinary (log-and-continue on failure)
-    try {
-      const { v2: cloudinary } = await import('cloudinary');
-      
-      // Configure cloudinary
-      cloudinary.config({
-        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret: process.env.CLOUDINARY_API_SECRET,
-      });
-
-      await cloudinary.uploader.destroy(publicId);
-      console.log(`Deleted Cloudinary image: ${publicId}`);
-    } catch (error) {
-      console.error(`Failed to delete Cloudinary image ${publicId}:`, error);
-      // Continue - don't block the DB update
-    }
+    // Delete from Cloudinary via shared service (log-and-continue on failure)
+    const removedImage = { url: '', publicId };
+    await cleanupOrphanedImages([removedImage], []);
 
     return NextResponse.json({
       success: true,

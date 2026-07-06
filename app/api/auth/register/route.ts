@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     
     if (!emailResult.success) {
       // Email send failed - log and return special message
-      console.error('⚠️  ALERT: Verification email failed to send for user:', email);
+      console.error('⚠️  ALERT: Verification email failed to send for user:', email.replace(/[\r\n]/g, ''));
       return NextResponse.json(
         {
           success: true,

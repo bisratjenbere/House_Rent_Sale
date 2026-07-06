@@ -11,8 +11,9 @@ import { handleApiError } from '@/lib/handleApiError';
  */
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
@@ -43,7 +44,7 @@ export async function PATCH(
 
     // Update only the featured field - no status change
     const property = await Property.findByIdAndUpdate(
-      params.id,
+      id,
       { featured: validationResult.data.featured },
       { new: true, runValidators: true }
     );

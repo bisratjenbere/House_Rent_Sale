@@ -11,8 +11,9 @@ import { notifyAllAdmins } from '@/services/notification.service';
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
@@ -24,7 +25,7 @@ export async function POST(
 
     // Assert ownership or admin role
     const property = await assertOwnerOrAdmin(
-      params.id,
+      id,
       token.userId as string,
       token.role as string
     );

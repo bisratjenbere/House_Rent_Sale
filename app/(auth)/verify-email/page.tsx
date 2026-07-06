@@ -18,15 +18,22 @@ function VerifyEmailContent() {
       return;
     }
     
-    // The API endpoint will redirect on success, so if we're here, check manually
+    // The API redirects to /login?verified=true on success, or returns JSON error
     const verifyEmail = async () => {
       try {
-        const response = await fetch(`/api/auth/verify-email?token=${token}`);
+        const response = await fetch(`/api/auth/verify-email?token=${token}`, {
+          redirect: 'manual', // Don't follow redirect — detect it ourselves
+        });
+
+        if (response.type === 'opaqueredirect' || response.status === 0) {
+          // Success: API redirected — navigate the browser to login
+          window.location.href = '/login?verified=true';
+          return;
+        }
+
         const result = await response.json();
-        
         if (response.ok) {
-          setStatus('success');
-          setMessage('Email verified successfully! You can now log in.');
+          window.location.href = '/login?verified=true';
         } else {
           setStatus('error');
           setMessage(result.error || 'Verification failed');
@@ -36,7 +43,7 @@ function VerifyEmailContent() {
         setMessage('An unexpected error occurred');
       }
     };
-    
+
     verifyEmail();
   }, [searchParams]);
   
@@ -79,8 +86,8 @@ function VerifyEmailContent() {
             </Link>
             <p className="text-sm text-muted-foreground">
               Need a new verification link?{' '}
-              <Link href="/register" className="text-primary hover:underline">
-                Register again
+              <Link href="/login" className="text-primary hover:underline">
+                Resend verification email
               </Link>
             </p>
           </div>

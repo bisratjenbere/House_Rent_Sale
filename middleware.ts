@@ -41,7 +41,7 @@ export async function middleware(request: NextRequest) {
           { status: 401 }
         );
       }
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL('/login', process.env.NEXTAUTH_URL));
     }
     
     if (token.role !== 'admin') {
@@ -52,14 +52,14 @@ export async function middleware(request: NextRequest) {
           { status: 403 }
         );
       }
-      return NextResponse.redirect(new URL('/', request.url));
+      return NextResponse.redirect(new URL('/', process.env.NEXTAUTH_URL));
     }
   }
   
   // User dashboard route protection
   if (pathname.startsWith('/dashboard')) {
     if (!token) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL('/login', process.env.NEXTAUTH_URL));
     }
   }
   
@@ -69,6 +69,7 @@ export async function middleware(request: NextRequest) {
     '/api/messages',
     '/api/profile',
     '/api/settings',
+    '/api/notifications',
   ];
   
   if (alwaysProtectedRoutes.some((route) => pathname.startsWith(route))) {
@@ -107,6 +108,7 @@ export const config = {
     '/api/messages/:path*',
     '/api/profile/:path*',
     '/api/settings/:path*',
+    '/api/notifications/:path*',
     '/api/properties/:path*',
     '/api/reviews/:path*',
     

@@ -15,9 +15,11 @@ export function generateToken(): string {
  */
 export async function generateVerificationToken(userId: string): Promise<string> {
   const token = generateToken();
+  const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
   
   await User.findByIdAndUpdate(userId, {
     verificationToken: token,
+    verificationTokenExpires: expiry,
   });
   
   return token;
@@ -31,7 +33,10 @@ export async function generateVerificationToken(userId: string): Promise<string>
 export async function verifyEmailToken(
   token: string
 ): Promise<{ success: boolean; error?: string; userId?: string }> {
-  const user = await User.findOne({ verificationToken: token });
+  const user = await User.findOne({
+    verificationToken: token,
+    verificationTokenExpires: { $gt: new Date() },
+  });
   
   if (!user) {
     return { success: false, error: 'Invalid or expired verification token' };
@@ -44,6 +49,7 @@ export async function verifyEmailToken(
   // Mark user as verified and clear token
   user.emailVerified = true;
   user.verificationToken = undefined;
+  user.verificationTokenExpires = undefined;
   await user.save();
   
   return { success: true, userId: user._id.toString() };

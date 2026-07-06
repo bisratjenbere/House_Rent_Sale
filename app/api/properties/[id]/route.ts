@@ -12,19 +12,19 @@ import {
 import { cleanupOrphanedImages } from '@/services/cloudinary.service';
 
 /**
- * GET /api/properties/:id
  * Get a single property (public - only published properties)
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     await connectDB();
 
     // Only return published properties for public access
     const property = await Property.findOne({
-      _id: params.id,
+      _id: id,
       status: 'published',
     })
       .populate('category', 'name slug')
@@ -53,8 +53,9 @@ export async function GET(
  */
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
@@ -75,7 +76,7 @@ export async function PUT(
 
     // Assert ownership or admin role
     const existingProperty = await assertOwnerOrAdmin(
-      params.id,
+      id,
       token.userId as string,
       token.role as string
     );
@@ -126,7 +127,7 @@ export async function PUT(
 
     // Update property
     const updatedProperty = await Property.findByIdAndUpdate(
-      params.id,
+      id,
       updates,
       { new: true, runValidators: true }
     );
@@ -146,8 +147,9 @@ export async function PUT(
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
 
@@ -159,34 +161,24 @@ export async function DELETE(
 
     // Assert ownership or admin role
     const property = await assertOwnerOrAdmin(
-      params.id,
+      id,
       token.userId as string,
       token.role as string
     );
 
     // Cascade delete all related documents
     await Promise.all([
-      Favorite.deleteMany({ property: params.id }),
-      Message.deleteMany({ property: params.id }),
-      Review.deleteMany({ property: params.id }),
-      Notification.deleteMany({ relatedProperty: params.id }),
+      Favorite.deleteMany({ property: id }),
+      Message.deleteMany({ property: id }),
+      Review.deleteMany({ property: id }),
+      Notification.deleteMany({ relatedProperty: id }),
     ]);
 
-    // Delete all Cloudinary images (log-and-continue on failure)
-    const cloudinary = await import('@/services/cloudinary.service');
-    for (const image of property.images) {
-      try {
-        const { v2: cloudinaryClient } = await import('cloudinary');
-        await cloudinaryClient.uploader.destroy(image.publicId);
-        console.log(`Deleted Cloudinary image: ${image.publicId}`);
-      } catch (error) {
-        console.error(`Failed to delete Cloudinary image ${image.publicId}:`, error);
-        // Continue - don't block deletion
-      }
-    }
+    // Delete all Cloudinary images via shared service (log-and-continue per image)
+    await cleanupOrphanedImages(property.images, []);
 
     // Delete property document
-    await Property.findByIdAndDelete(params.id);
+    await Property.findByIdAndDelete(id);
 
     return NextResponse.json({
       success: true,

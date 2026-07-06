@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Redirect to login page with verified flag
-    return NextResponse.redirect(new URL('/login?verified=true', request.url));
+    return NextResponse.redirect(new URL('/login?verified=true', process.env.NEXTAUTH_URL));
   } catch (error) {
     console.error('Email verification error:', error);
     return NextResponse.json(

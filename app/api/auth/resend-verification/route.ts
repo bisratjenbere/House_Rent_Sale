@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       
       if (!emailResult.success) {
         // Log error but still return generic success (enumeration protection)
-        console.error('Failed to resend verification email to:', email);
+        console.error('Failed to resend verification email to:', email.replace(/[\r\n]/g, ''));
       }
     }
     

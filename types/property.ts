@@ -29,10 +29,10 @@ const imageSchema = z.object({
 
 // Base property schema (excludes owner, status, featured - server-controlled fields)
 export const propertyBaseSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(200, 'Title cannot exceed 200 characters'),
+  title: z.string().min(2, 'Title must be at least 2 characters').max(200, 'Title cannot exceed 200 characters'),
   description: z
     .string()
-    .min(1, 'Description is required')
+    .min(10, 'Description must be at least 10 characters')
     .max(5000, 'Description cannot exceed 5000 characters'),
   propertyType: propertyTypeEnum,
   category: z.string().min(1, 'Category is required'), // MongoDB ObjectId as string
@@ -42,7 +42,7 @@ export const propertyBaseSchema = z.object({
   bathrooms: z.number().min(0, 'Bathrooms cannot be negative').default(0),
   kitchens: z.number().min(0, 'Kitchens cannot be negative').default(0),
   parking: z.number().min(0, 'Parking cannot be negative').default(0),
-  area: z.number().min(0, 'Area cannot be negative'),
+  area: z.number().min(1, 'Area must be greater than 0'),
   address: z.string().min(1, 'Address is required'),
   city: z.string().min(1, 'City is required'),
   region: z.string().min(1, 'Region is required'),

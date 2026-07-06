@@ -62,7 +62,7 @@ export async function checkRateLimit(
     if (count > limit) {
       return {
         success: false,
-        error: `Rate limit exceeded. Maximum ${limit} requests per ${windowSeconds} seconds.`,
+        error: 'Too many requests. Please try again later.',
       };
     }
 

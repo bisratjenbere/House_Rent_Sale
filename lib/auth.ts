@@ -4,6 +4,9 @@ import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/db';
 import { User } from '@/models';
 
+// Pre-generated at module load to avoid hardcoded hash and amortize bcrypt cost
+const dummyHashPromise = bcrypt.hash('dummy-timing-placeholder', 10);
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
@@ -12,6 +15,7 @@ export const authOptions: NextAuthOptions = {
   
   pages: {
     signIn: '/login',
+    error: '/login',
   },
   
   providers: [
@@ -29,11 +33,10 @@ export const authOptions: NextAuthOptions = {
         await connectDB();
         
         // Find user by email
-        const user = await User.findOne({ email: credentials.email }).select('+password');
+        const user = await User.findOne({ email: credentials.email.toLowerCase() }).select('+password');
         
-        // Timing attack prevention: always hash a password even if user doesn't exist
-        const dummyHash = '$2a$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFG';
-        const passwordToCompare = user?.password || dummyHash;
+        // Timing attack prevention: always compare a password even if user doesn't exist
+        const passwordToCompare = user?.password || (await dummyHashPromise);
         
         // Compare password
         const isValid = await bcrypt.compare(credentials.password, passwordToCompare);
