@@ -1,3 +1,4 @@
+import type { SortOrder } from 'mongoose';
 import { Category } from '@/models';
 import type { PropertySearchQuery } from '@/types/property-search';
 
@@ -40,7 +41,7 @@ export async function buildPropertyFilter(query: PropertySearchQuery) {
   return filter;
 }
 
-export function buildSortStage(query: PropertySearchQuery): Record<string, unknown> {
+export function buildSortStage(query: PropertySearchQuery): Record<string, SortOrder | { $meta: string }> {
   if (query.search) {
     return { score: { $meta: 'textScore' }, createdAt: -1 };
   }
