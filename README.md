@@ -44,6 +44,23 @@ CLOUDINARY_API_SECRET=
 RESEND_API_KEY=
 ```
 
+## Maps Integration
+
+This project uses **OpenStreetMap + Leaflet** (no API key required).
+
+- Geocoding is handled by the [Nominatim API](https://nominatim.openstreetmap.org/) — free, no key needed.
+- After deployment, create the geospatial index by calling:
+  ```bash
+  curl -X POST https://your-domain.com/api/init \
+    -H "Cookie: <admin-session-cookie>"
+  ```
+  Or run it from the admin dashboard. This is idempotent and safe to call multiple times.
+- Default map center (Addis Ababa) can be overridden via env vars:
+  ```env
+  NEXT_PUBLIC_DEFAULT_MAP_LAT=9.03
+  NEXT_PUBLIC_DEFAULT_MAP_LNG=38.74
+  ```
+
 ## Folder Structure
 
 ```
