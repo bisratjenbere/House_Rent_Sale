@@ -11,6 +11,7 @@ import {
   buildSortStage,
   applyCursor,
 } from '@/services/property-search.service';
+import { buildRadiusFilter } from '@/lib/geospatial';
 
 /**
  * GET /api/properties
@@ -39,6 +40,30 @@ export async function GET(request: NextRequest) {
     await connectDB();
 
     const filter = await buildPropertyFilter(query);
+
+    // Radius search (US-7): all three params must be present together
+    if (query.centerLat !== undefined || query.centerLng !== undefined || query.radiusKm !== undefined) {
+      if (query.centerLat === undefined || query.centerLng === undefined || query.radiusKm === undefined) {
+        return NextResponse.json(
+          { success: false, error: 'Radius search requires centerLat, centerLng, and radiusKm' },
+          { status: 400 }
+        );
+      }
+
+      const radiusFilter = buildRadiusFilter(query.centerLat, query.centerLng, query.radiusKm);
+      if (!radiusFilter) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid radius search parameters' },
+          { status: 400 }
+        );
+      }
+
+      // Merge radius filter (AND combination with existing filters)
+      Object.assign(filter, radiusFilter);
+
+      // Radius replaces city filter — mutually exclusive per US-7
+      delete (filter as Record<string, unknown>).city;
+    }
 
     if (query.search) {
       // Text search branch: offset-based pagination (score sort doesn't compose with cursor)
