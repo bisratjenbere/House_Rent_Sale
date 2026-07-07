@@ -23,7 +23,4 @@ const AmenitySchema = new Schema<IAmenity>(
   }
 );
 
-// Unique index on name to prevent duplicate amenities
-AmenitySchema.index({ name: 1 }, { unique: true });
-
 export default mongoose.models.Amenity || mongoose.model<IAmenity>('Amenity', AmenitySchema);
