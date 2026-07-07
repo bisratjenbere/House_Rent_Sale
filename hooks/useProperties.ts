@@ -90,15 +90,13 @@ export function useProperties(options: UsePropertiesOptions = {}): UseProperties
       }
 
       if (cursor) {
-        // Append for pagination
-        setProperties((prev) => [...prev, ...(data.data || [])]);
+        setProperties((prev) => [...prev, ...(data.data?.properties || [])]);
       } else {
-        // Replace for new search
-        setProperties(data.data || []);
+        setProperties(data.data?.properties || []);
       }
 
-      setNextCursor(data.nextCursor || null);
-      setHasMore(!!data.nextCursor);
+      setNextCursor(data.data?.nextCursor || null);
+      setHasMore(!!data.data?.nextCursor);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
       setProperties([]);
