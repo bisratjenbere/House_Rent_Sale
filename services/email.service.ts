@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { deleteAccountRequestTemplate } from '@/lib/email/templates/delete-account-request';
 import { verificationEmailTemplate } from '@/lib/email/templates/verification';
 import { passwordResetEmailTemplate } from '@/lib/email/templates/password-reset';
 import { messageNotificationTemplate } from '@/lib/email/templates/message-notification';
@@ -135,6 +136,30 @@ export async function sendPropertyStatusNotificationEmail(
 /**
  * Send review notification email to property owner (D14 — only if emailNotificationsEnabled)
  */
+/**
+ * Send account deletion request notification to admin
+ */
+export async function sendDeleteAccountRequestEmail(
+  userName: string,
+  userEmail: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const adminEmail = process.env.ADMIN_EMAIL ?? process.env.EMAIL_FROM!;
+    const html = deleteAccountRequestTemplate(userName, userEmail);
+    const resendClient = getResendClient();
+    await resendClient.emails.send({
+      from: process.env.EMAIL_FROM!,
+      to: adminEmail,
+      subject: `Account Deletion Request from ${userEmail}`,
+      html,
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to send delete account request email:', error);
+    return { success: false, error: 'Failed to send delete account request email' };
+  }
+}
+
 export async function sendReviewNotificationEmail(
   to: string,
   propertyTitle: string,
