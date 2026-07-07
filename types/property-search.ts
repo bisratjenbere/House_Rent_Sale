@@ -19,6 +19,11 @@ export const propertySearchQuerySchema = z.object({
   page: z.coerce.number().int().min(1).default(1),
   limit: z.coerce.number().int().min(1).max(50).default(12),
   sort: z.enum(['newest', 'oldest', 'price-asc', 'price-desc']).default('newest'),
+
+  // Radius search params (maps-integration US-7)
+  centerLat: z.coerce.number().min(-90).max(90).optional(),
+  centerLng: z.coerce.number().min(-180).max(180).optional(),
+  radiusKm: z.coerce.number().min(1).max(100).optional(),
 });
 
 export type PropertySearchQuery = z.infer<typeof propertySearchQuerySchema>;
