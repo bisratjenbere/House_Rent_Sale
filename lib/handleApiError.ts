@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+import mongoose from 'mongoose';
 import {
   NotFoundError,
   ForbiddenError,
@@ -56,6 +57,22 @@ export function handleApiError(error: unknown): NextResponse {
         error: 'Validation failed',
         details: error.issues,
       },
+      { status: 400 }
+    );
+  }
+
+  // Mongoose CastError (invalid ObjectId) - 400
+  if (error instanceof mongoose.Error.CastError) {
+    return NextResponse.json(
+      { success: false, error: 'Invalid ID format' },
+      { status: 400 }
+    );
+  }
+
+  // Malformed JSON body - 400
+  if (error instanceof SyntaxError && 'body' in (error as NodeJS.ErrnoException)) {
+    return NextResponse.json(
+      { success: false, error: 'Invalid JSON in request body' },
       { status: 400 }
     );
   }

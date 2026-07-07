@@ -9,6 +9,10 @@ import { assertReviewEligible } from '@/services/review.service';
 import { notifySingleUser } from '@/services/notification.service';
 import { sendReviewNotificationEmail } from '@/services/email.service';
 
+export async function GET() {
+  return NextResponse.json({ success: false, error: 'Method not allowed' }, { status: 405 });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });

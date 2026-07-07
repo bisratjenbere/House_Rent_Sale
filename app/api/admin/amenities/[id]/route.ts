@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { connectDB } from '@/lib/db';
-import { Amenity } from '@/models';
+import { Amenity, Property } from '@/models';
 import { updateAmenitySchema } from '@/types/amenity';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { handleApiError } from '@/lib/handleApiError';
@@ -87,6 +87,14 @@ export async function DELETE(
     }
 
     await connectDB();
+
+    const count = await Property.countDocuments({ amenities: id });
+    if (count > 0) {
+      return NextResponse.json(
+        { success: false, error: `Cannot delete amenity: ${count} propert${count === 1 ? 'y is' : 'ies are'} using it. Remove it from those properties first.` },
+        { status: 400 }
+      );
+    }
 
     const deleted = await Amenity.findByIdAndDelete(id);
     if (!deleted) {

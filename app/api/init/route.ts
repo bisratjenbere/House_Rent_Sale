@@ -3,6 +3,10 @@ import { getToken } from 'next-auth/jwt';
 import { ensureGeospatialIndex } from '@/lib/geospatial';
 import { handleApiError } from '@/lib/handleApiError';
 
+export async function GET() {
+  return NextResponse.json({ success: false, error: 'Method not allowed' }, { status: 405 });
+}
+
 /**
  * POST /api/init
  * Admin-only: creates the compound geospatial index on Property.location.

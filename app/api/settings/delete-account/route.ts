@@ -7,12 +7,19 @@ import { User } from '@/models';
 import { handleApiError } from '@/lib/handleApiError';
 import { deleteAccountRequestSchema } from '@/types/profile';
 import { sendDeleteAccountRequestEmail } from '@/services/email.service';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Rate limiting - 3 requests per hour to prevent admin email bombing
+    const rateLimitResult = await checkRateLimit(`delete-account:${session.user.id}`, 3, 3600);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ success: false, error: rateLimitResult.error }, { status: 429 });
     }
 
     const body = await request.json();

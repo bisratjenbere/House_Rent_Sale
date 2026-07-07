@@ -4,6 +4,10 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { generateUploadSignature } from '@/services/cloudinary.service';
 import { handleApiError } from '@/lib/handleApiError';
 
+export async function GET() {
+  return NextResponse.json({ success: false, error: 'Method not allowed' }, { status: 405 });
+}
+
 /**
  * POST /api/upload/signature
  * Generate Cloudinary upload signature for authenticated users

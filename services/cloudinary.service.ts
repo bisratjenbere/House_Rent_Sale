@@ -24,17 +24,25 @@ export function generateUploadSignature(): {
   api_key: string;
   cloud_name: string;
   upload_preset: string;
+  folder: string;
+  allowed_formats: string;
+  max_bytes: number;
 } {
   ensureCloudinaryConfigured();
 
   const timestamp = Math.round(Date.now() / 1000);
   const upload_preset = process.env.CLOUDINARY_UPLOAD_PRESET!;
+  const folder = 'properties';
+  const allowed_formats = 'jpg,jpeg,png,webp';
+  const max_bytes = 10 * 1024 * 1024; // 10 MB
 
-  // Generate signature for secure upload
   const signature = cloudinary.utils.api_sign_request(
     {
       timestamp,
       upload_preset,
+      folder,
+      allowed_formats,
+      max_bytes,
     },
     process.env.CLOUDINARY_API_SECRET!
   );
@@ -45,6 +53,9 @@ export function generateUploadSignature(): {
     api_key: process.env.CLOUDINARY_API_KEY!,
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME!,
     upload_preset,
+    folder,
+    allowed_formats,
+    max_bytes,
   };
 }
 

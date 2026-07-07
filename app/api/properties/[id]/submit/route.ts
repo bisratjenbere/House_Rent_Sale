@@ -4,6 +4,7 @@ import { connectDB } from '@/lib/db';
 import { handleApiError } from '@/lib/handleApiError';
 import { assertOwnerOrAdmin } from '@/services/property.service';
 import { notifyAllAdmins } from '@/services/notification.service';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/properties/:id/submit
@@ -19,6 +20,11 @@ export async function POST(
 
     if (!token || !token.userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimitResult = await checkRateLimit(token.userId as string, 10, 60);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ success: false, error: rateLimitResult.error }, { status: 429 });
     }
 
     await connectDB();

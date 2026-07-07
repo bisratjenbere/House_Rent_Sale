@@ -157,6 +157,12 @@ export async function DELETE(
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Rate limiting - 10 requests per minute per user
+    const rateLimitResult = await checkRateLimit(token.userId as string, 10, 60);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ success: false, error: rateLimitResult.error }, { status: 429 });
+    }
+
     await connectDB();
 
     // Assert ownership or admin role

@@ -31,13 +31,19 @@ export async function GET(request: NextRequest) {
 
     await connectDB();
 
+    // Fetch only the messages needed for this page's conversations.
+    // We over-fetch slightly (page * limit * 10) to have enough unique property
+    // groups to fill the page after grouping, then paginate the grouped result.
+    const fetchLimit = page * limit * 10;
+
     const messages = await Message.find({
       $or: [{ sender: token.userId }, { receiver: token.userId }],
     })
       .populate('property', 'title images')
       .populate('sender', 'name avatar')
       .populate('receiver', 'name avatar')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .limit(fetchLimit);
 
     // Filter out messages where property was deleted
     const valid = messages.filter((m) => m.property !== null);

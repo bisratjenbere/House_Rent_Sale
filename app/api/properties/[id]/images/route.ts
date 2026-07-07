@@ -8,6 +8,7 @@ import {
   resolveStatusAfterImageDelete,
 } from '@/services/property.service';
 import { cleanupOrphanedImages } from '@/services/cloudinary.service';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 /**
  * DELETE /api/properties/:id/images
@@ -24,6 +25,11 @@ export async function DELETE(
 
     if (!token || !token.userId) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const rateLimitResult = await checkRateLimit(token.userId as string, 30, 60);
+    if (!rateLimitResult.success) {
+      return NextResponse.json({ success: false, error: rateLimitResult.error }, { status: 429 });
     }
 
     await connectDB();
