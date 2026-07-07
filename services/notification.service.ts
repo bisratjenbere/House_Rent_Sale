@@ -12,20 +12,15 @@ interface NotificationPayload {
 
 /**
  * Send a notification to all admin users
- * @param payload - Notification content and metadata
- * @returns Number of notifications created
  */
 export async function notifyAllAdmins(payload: NotificationPayload): Promise<number> {
-  // Find all admin users
   const admins = await User.find({ role: 'admin' }).select('_id');
 
-  // If no admins, return early (no error)
   if (admins.length === 0) {
     console.warn('notifyAllAdmins: No admin users found');
     return 0;
   }
 
-  // Create one notification per admin
   const notifications = admins.map((admin) => ({
     user: admin._id,
     type: payload.type,
@@ -37,9 +32,21 @@ export async function notifyAllAdmins(payload: NotificationPayload): Promise<num
     read: false,
   }));
 
-  // Bulk insert all notifications
   const result = await Notification.insertMany(notifications);
-
   console.log(`Created ${result.length} admin notifications`);
   return result.length;
+}
+
+/**
+ * Send a notification to a single user
+ */
+export async function notifySingleUser(
+  userId: string,
+  payload: NotificationPayload
+): Promise<void> {
+  await Notification.create({
+    user: userId,
+    ...payload,
+    read: false,
+  });
 }
