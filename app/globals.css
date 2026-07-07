@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   :root {
@@ -58,4 +60,12 @@
   --font-display: "Fraunces", serif;
   --font-body: "Inter", sans-serif;
   --font-data: "IBM Plex Mono", monospace;
+}
+
+/* Leaflet map popup — mobile overflow fix */
+.leaflet-popup-content-wrapper {
+  max-width: 200px !important;
+}
+.leaflet-popup-content {
+  overflow: auto !important;
 }
