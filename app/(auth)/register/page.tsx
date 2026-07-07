@@ -41,7 +41,7 @@ export default function RegisterPage() {
         setSuccess(result.message);
      
         setTimeout(() => {
-          router.push('/login');
+          router.push('/login?message=check-email');
         }, 3000);
       }
     } catch (err) {

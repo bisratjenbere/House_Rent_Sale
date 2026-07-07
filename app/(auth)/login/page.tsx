@@ -27,6 +27,9 @@ function LoginForm() {
     if (searchParams.get('verified') === 'true') {
       setSuccess('Email verified successfully! You can now log in.');
     }
+    if (searchParams.get('message') === 'check-email') {
+      setSuccess('Registration successful! Please check your email to verify your account before logging in.');
+    }
   }, [searchParams]);
   
   const onSubmit = async (data: LoginInput) => {
@@ -60,7 +63,14 @@ function LoginForm() {
       
       {error && (
         <div className="bg-destructive/10 text-destructive p-3 rounded-md mb-4 text-sm">
-          {error}
+          {error.includes('verify your email') ? (
+            <>
+              Please verify your email address before logging in.{' '}
+              <Link href="/resend-verification" className="underline font-medium">
+                Resend verification email
+              </Link>
+            </>
+          ) : error}
         </div>
       )}
       
