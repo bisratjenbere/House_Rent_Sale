@@ -3,6 +3,7 @@ import { verificationEmailTemplate } from '@/lib/email/templates/verification';
 import { passwordResetEmailTemplate } from '@/lib/email/templates/password-reset';
 import { messageNotificationTemplate } from '@/lib/email/templates/message-notification';
 import { reviewNotificationTemplate } from '@/lib/email/templates/review-notification';
+import { propertyStatusNotificationTemplate } from '@/lib/email/templates/property-status-notification';
 
 // Lazy-initialize Resend client to avoid build-time errors
 let resend: Resend | null = null;
@@ -103,6 +104,31 @@ export async function sendMessageNotificationEmail(
   } catch (error) {
     console.error('Failed to send message notification email:', error);
     return { success: false, error: 'Failed to send message notification email' };
+  }
+}
+
+/**
+ * Send property status notification email (approved/rejected) to property owner
+ * Only called if owner's emailNotificationsEnabled = true (D14)
+ */
+export async function sendPropertyStatusNotificationEmail(
+  to: string,
+  propertyTitle: string,
+  status: 'approved' | 'rejected',
+  rejectionReason?: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const subject =
+      status === 'approved'
+        ? `Your property "${propertyTitle}" has been approved`
+        : `Your property "${propertyTitle}" was not approved`;
+    const html = propertyStatusNotificationTemplate(propertyTitle, status, rejectionReason);
+    const resendClient = getResendClient();
+    await resendClient.emails.send({ from: process.env.EMAIL_FROM!, to, subject, html });
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to send property status notification email:', error);
+    return { success: false, error: 'Failed to send property status notification email' };
   }
 }
 
