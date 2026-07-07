@@ -2,6 +2,7 @@ import { Resend } from 'resend';
 import { verificationEmailTemplate } from '@/lib/email/templates/verification';
 import { passwordResetEmailTemplate } from '@/lib/email/templates/password-reset';
 import { messageNotificationTemplate } from '@/lib/email/templates/message-notification';
+import { reviewNotificationTemplate } from '@/lib/email/templates/review-notification';
 
 // Lazy-initialize Resend client to avoid build-time errors
 let resend: Resend | null = null;
@@ -102,5 +103,32 @@ export async function sendMessageNotificationEmail(
   } catch (error) {
     console.error('Failed to send message notification email:', error);
     return { success: false, error: 'Failed to send message notification email' };
+  }
+}
+
+/**
+ * Send review notification email to property owner (D14 — only if emailNotificationsEnabled)
+ */
+export async function sendReviewNotificationEmail(
+  to: string,
+  propertyTitle: string,
+  rating: number,
+  commentExcerpt: string,
+  propertyId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const propertyUrl = `${process.env.NEXTAUTH_URL}/properties/${propertyId}`;
+    const html = reviewNotificationTemplate(propertyTitle, rating, commentExcerpt, propertyUrl);
+    const resendClient = getResendClient();
+    await resendClient.emails.send({
+      from: process.env.EMAIL_FROM!,
+      to,
+      subject: `New ${rating}-star review on ${propertyTitle}`,
+      html,
+    });
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to send review notification email:', error);
+    return { success: false, error: 'Failed to send review notification email' };
   }
 }
