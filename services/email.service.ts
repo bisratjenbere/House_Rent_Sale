@@ -1,6 +1,7 @@
 import { Resend } from 'resend';
 import { verificationEmailTemplate } from '@/lib/email/templates/verification';
 import { passwordResetEmailTemplate } from '@/lib/email/templates/password-reset';
+import { messageNotificationTemplate } from '@/lib/email/templates/message-notification';
 
 // Lazy-initialize Resend client to avoid build-time errors
 let resend: Resend | null = null;
@@ -73,5 +74,33 @@ export async function sendPasswordResetEmail(
       success: false,
       error: 'Failed to send password reset email',
     };
+  }
+}
+
+/**
+ * Send message notification email to property owner (D14 — only if emailNotificationsEnabled)
+ */
+export async function sendMessageNotificationEmail(
+  to: string,
+  propertyTitle: string,
+  messageExcerpt: string,
+  propertyId: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const messageUrl = `${process.env.NEXTAUTH_URL}/dashboard/messages?property=${propertyId}`;
+    const html = messageNotificationTemplate(propertyTitle, messageExcerpt, messageUrl);
+
+    const resendClient = getResendClient();
+    await resendClient.emails.send({
+      from: process.env.EMAIL_FROM!,
+      to,
+      subject: `New message about ${propertyTitle}`,
+      html,
+    });
+
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to send message notification email:', error);
+    return { success: false, error: 'Failed to send message notification email' };
   }
 }
