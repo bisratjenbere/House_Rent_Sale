@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
 import {
   Menu,
@@ -17,6 +17,8 @@ import {
   LogOut,
   Shield,
   PlusCircle,
+  Trash2,
+  CheckCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +30,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useNotifications } from "@/hooks/useNotifications";
+import { formatDistanceToNow } from "date-fns";
 
 const NAV_LINKS = [
   { href: "/properties", label: "Properties" },
@@ -39,23 +44,43 @@ const NAV_LINKS = [
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session, status } = useSession();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
 
-  // Fetch unread notification count
+  const {
+    notifications,
+    unreadCount,
+    loading: notifLoading,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+  } = useNotifications();
+
+  // Close notif dropdown on outside click
   useEffect(() => {
-    if (status === "authenticated") {
-      fetch("/api/notifications/unread-count")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.success) {
-            setUnreadNotifications(data.data.count);
-          }
-        })
-        .catch((err) => console.error("Failed to fetch notification count:", err));
+    function handleClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
     }
-  }, [status]);
+    if (notifOpen) document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [notifOpen]);
+
+  const handleBellClick = () => {
+    if (!notifOpen) fetchNotifications();
+    setNotifOpen((v) => !v);
+  };
+
+  const handleNotifClick = async (id: string, link?: string) => {
+    await markAsRead(id);
+    setNotifOpen(false);
+    if (link) router.push(link);
+  };
 
   const handleSignOut = async () => {
     await signOut({ callbackUrl: "/login" });
@@ -82,9 +107,7 @@ export function Navbar() {
               href={link.href}
               className={cn(
                 "text-sm font-medium transition-colors hover:text-primary",
-                isActive(link.href)
-                  ? "text-primary"
-                  : "text-muted-foreground"
+                isActive(link.href) ? "text-primary" : "text-muted-foreground"
               )}
             >
               {link.label}
@@ -99,19 +122,110 @@ export function Navbar() {
           ) : status === "authenticated" && session?.user ? (
             <>
               {/* Notification Bell */}
-              <Link href="/dashboard/notifications">
-                <Button variant="ghost" size="icon" className="relative">
+              <div className="relative" ref={notifRef}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="relative"
+                  onClick={handleBellClick}
+                  aria-label="Notifications"
+                >
                   <Bell className="h-5 w-5" />
-                  {unreadNotifications > 0 && (
+                  {unreadCount > 0 && (
                     <Badge
                       variant="destructive"
                       className="absolute -right-1 -top-1 h-5 min-w-5 rounded-full px-1 text-xs"
                     >
-                      {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                      {unreadCount > 9 ? "9+" : unreadCount}
                     </Badge>
                   )}
                 </Button>
-              </Link>
+
+                {/* Notifications Dropdown Panel */}
+                {notifOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 rounded border border-border bg-background shadow-lg z-50">
+                    {/* Header */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                      <span className="text-sm font-medium">Notifications</span>
+                      {notifications.some((n) => !n.read) && (
+                        <button
+                          onClick={markAllAsRead}
+                          className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors"
+                        >
+                          <CheckCheck className="h-3 w-3" />
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+
+                    {/* List */}
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifLoading ? (
+                        <div className="p-4 space-y-3">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className="flex gap-3">
+                              <Skeleton className="h-2 w-2 rounded-full mt-1.5 shrink-0" />
+                              <div className="flex-1 space-y-1">
+                                <Skeleton className="h-3 w-3/4" />
+                                <Skeleton className="h-3 w-full" />
+                                <Skeleton className="h-2 w-1/3" />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="py-8 text-center text-sm text-muted-foreground">
+                          No notifications yet
+                        </div>
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n._id}
+                            className={cn(
+                              "group flex items-start gap-3 px-4 py-3 border-b border-border last:border-0 hover:bg-muted/50 transition-colors",
+                              !n.read && "bg-primary/5"
+                            )}
+                          >
+                            {/* Unread dot */}
+                            <span
+                              className={cn(
+                                "mt-1.5 h-2 w-2 rounded-full shrink-0",
+                                n.read ? "bg-transparent" : "bg-primary"
+                              )}
+                            />
+                            <button
+                              className="flex-1 text-left min-w-0"
+                              onClick={() => handleNotifClick(n._id, n.link)}
+                            >
+                              <p className="text-sm font-medium truncate">
+                                {n.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                                {n.message}
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {formatDistanceToNow(new Date(n.createdAt), {
+                                  addSuffix: true,
+                                })}
+                              </p>
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotification(n._id);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity shrink-0 text-muted-foreground hover:text-destructive"
+                              aria-label="Delete notification"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* User Dropdown */}
               <DropdownMenu>
@@ -225,7 +339,6 @@ export function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-background">
           <div className="container mx-auto px-4 py-4 space-y-4">
-            {/* Navigation Links */}
             <div className="flex flex-col space-y-2">
               {NAV_LINKS.map((link) => (
                 <Link
@@ -244,95 +357,92 @@ export function Navbar() {
               ))}
             </div>
 
-            {/* Mobile Auth Section */}
             {status === "authenticated" && session?.user ? (
-              <>
-                <div className="border-t border-border pt-4 space-y-2">
-                  <Link
-                    href="/dashboard/notifications"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center justify-between px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
-                  >
-                    <span className="flex items-center">
-                      <Bell className="mr-2 h-4 w-4" />
-                      Notifications
-                    </span>
-                    {unreadNotifications > 0 && (
-                      <Badge variant="destructive" className="ml-auto">
-                        {unreadNotifications}
-                      </Badge>
-                    )}
-                  </Link>
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
-                  >
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </Link>
-                  <Link
-                    href="/dashboard/properties"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
-                  >
-                    <HomeIcon className="mr-2 h-4 w-4" />
-                    My Listings
-                  </Link>
-                  <Link
-                    href="/dashboard/favorites"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
-                  >
-                    <Heart className="mr-2 h-4 w-4" />
-                    Favorites
-                  </Link>
-                  <Link
-                    href="/dashboard/messages"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
-                  >
-                    <MessageSquare className="mr-2 h-4 w-4" />
-                    Messages
-                  </Link>
-                  <Link
-                    href="/dashboard/profile"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
-                  >
-                    <User className="mr-2 h-4 w-4" />
-                    Profile
-                  </Link>
-                  <Link
-                    href="/dashboard/settings"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
-                  >
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
-                  {session.user.role === "admin" && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
-                    >
-                      <Shield className="mr-2 h-4 w-4" />
-                      Admin Panel
-                    </Link>
+              <div className="border-t border-border pt-4 space-y-2">
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleBellClick();
+                  }}
+                  className="flex items-center justify-between w-full px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
+                >
+                  <span className="flex items-center">
+                    <Bell className="mr-2 h-4 w-4" />
+                    Notifications
+                  </span>
+                  {unreadCount > 0 && (
+                    <Badge variant="destructive">{unreadCount}</Badge>
                   )}
-                  <button
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      handleSignOut();
-                    }}
-                    className="flex w-full items-center px-3 py-2 rounded text-sm font-medium text-destructive hover:bg-muted"
+                </button>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
+                >
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Dashboard
+                </Link>
+                <Link
+                  href="/dashboard/properties"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
+                >
+                  <HomeIcon className="mr-2 h-4 w-4" />
+                  My Listings
+                </Link>
+                <Link
+                  href="/dashboard/favorites"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
+                >
+                  <Heart className="mr-2 h-4 w-4" />
+                  Favorites
+                </Link>
+                <Link
+                  href="/dashboard/messages"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  Messages
+                </Link>
+                <Link
+                  href="/dashboard/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
+                >
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </Link>
+                <Link
+                  href="/dashboard/settings"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
+                >
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
+                </Link>
+                {session.user.role === "admin" && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="flex items-center px-3 py-2 rounded text-sm font-medium text-foreground hover:bg-muted"
                   >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Logout
-                  </button>
-                </div>
-              </>
+                    <Shield className="mr-2 h-4 w-4" />
+                    Admin Panel
+                  </Link>
+                )}
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleSignOut();
+                  }}
+                  className="flex w-full items-center px-3 py-2 rounded text-sm font-medium text-destructive hover:bg-muted"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </button>
+              </div>
             ) : (
               <div className="border-t border-border pt-4 space-y-2">
                 <Button variant="outline" className="w-full" asChild>

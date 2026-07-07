@@ -41,8 +41,4 @@ CategorySchema.pre('save', function () {
   }
 });
 
-// Unique indexes
-CategorySchema.index({ name: 1 }, { unique: true });
-CategorySchema.index({ slug: 1 }, { unique: true });
-
 export default mongoose.models.Category || mongoose.model<ICategory>('Category', CategorySchema);

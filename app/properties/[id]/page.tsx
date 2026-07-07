@@ -6,6 +6,7 @@ import { PropertyTypeBadge } from "@/components/property/PropertyTypeBadge";
 import { PriceDisplay } from "@/components/property/PriceDisplay";
 import { PropertyMapSection } from "@/components/property/PropertyMapSection";
 import { MessageForm } from "@/components/property/MessageForm";
+import { ReviewsSection } from "@/components/property/ReviewsSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -358,6 +359,9 @@ export default async function PropertyDetailPage({
                 />
               </section>
             )}
+
+            {/* Reviews Section */}
+            <ReviewsSection propertyId={property._id} />
           </div>
 
           {/* Sidebar */}

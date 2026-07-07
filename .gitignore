@@ -29,6 +29,7 @@
 
 # Kiro project files (keep local only)
 .kiro/
+.kilo/
 
 
 # debug
