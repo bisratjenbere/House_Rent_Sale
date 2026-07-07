@@ -64,10 +64,22 @@ export async function POST(request: NextRequest) {
       name,
       email,
       password: hashedPassword,
-      role: 'user', // Always 'user', ignore any client-submitted role
-      emailVerified: false,
-      emailNotificationsEnabled: true, // D14
+      role: 'user',
+      emailVerified: process.env.NODE_ENV === 'development', // skip verification in dev
+      emailNotificationsEnabled: true,
     });
+    
+    // Skip verification email in development
+    if (process.env.NODE_ENV === 'development') {
+      return NextResponse.json(
+        {
+          success: true,
+          message: 'Registration successful. You can now log in.',
+          emailSent: false,
+        },
+        { status: 201 }
+      );
+    }
     
     // Generate verification token
     const verificationToken = await generateVerificationToken(user._id.toString());

@@ -39,10 +39,11 @@ export default function RegisterPage() {
         setError(result.error || 'Registration failed');
       } else {
         setSuccess(result.message);
-     
         setTimeout(() => {
-          router.push('/login?message=check-email');
-        }, 3000);
+          router.push(result.emailSent === false && result.message.includes('log in') 
+            ? '/login' 
+            : '/login?message=check-email');
+        }, 2000);
       }
     } catch (err) {
       setError('An unexpected error occurred');

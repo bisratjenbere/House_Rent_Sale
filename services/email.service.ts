@@ -31,13 +31,19 @@ export async function sendVerificationEmail(
     const html = verificationEmailTemplate(verifyUrl);
     
     const resendClient = getResendClient();
-    await resendClient.emails.send({
+    const { data, error } = await resendClient.emails.send({
       from: process.env.EMAIL_FROM!,
       to,
       subject: 'Verify Your Email Address',
       html,
     });
-    
+
+    if (error) {
+      console.error('Resend rejected verification email:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Verification email sent, id:', data?.id, 'to:', to);
     return { success: true };
   } catch (error) {
     console.error('Failed to send verification email:', error);
@@ -63,13 +69,19 @@ export async function sendPasswordResetEmail(
     const html = passwordResetEmailTemplate(resetUrl);
     
     const resendClient = getResendClient();
-    await resendClient.emails.send({
+    const { data, error } = await resendClient.emails.send({
       from: process.env.EMAIL_FROM!,
       to,
       subject: 'Reset Your Password',
       html,
     });
-    
+
+    if (error) {
+      console.error('Resend rejected password reset email:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('Password reset email sent, id:', data?.id, 'to:', to);
     return { success: true };
   } catch (error) {
     console.error('Failed to send password reset email:', error);
