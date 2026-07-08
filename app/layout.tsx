@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
 import { Fraunces, Inter, IBM_Plex_Mono, Geist } from 'next/font/google'
 import './globals.css'
-import { Navbar } from '@/components/layout/Navbar'
-import { Footer } from '@/components/layout/Footer'
 import { SessionProvider } from '@/components/providers/SessionProvider'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { Toaster } from 'sonner'
@@ -44,13 +42,9 @@ export default function RootLayout({
     <html lang="en" className={cn(fraunces.variable, inter.variable, plexMono.variable, "font-sans", geist.variable)}>
       <body className="font-body bg-background text-foreground antialiased">
         <SessionProvider>
-          <div className="flex min-h-screen flex-col">
-            <Navbar />
-            <ErrorBoundary>
-              <main className="flex-1">{children}</main>
-            </ErrorBoundary>
-            <Footer />
-          </div>
+          <ErrorBoundary>
+            {children}
+          </ErrorBoundary>
           <Toaster position="top-right" richColors />
         </SessionProvider>
       </body>
