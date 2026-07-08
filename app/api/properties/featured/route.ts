@@ -4,7 +4,7 @@ import { Property } from '@/models';
 import { checkRateLimit, getClientIp } from '@/lib/rate-limit';
 import { handleApiError } from '@/lib/handleApiError';
 
-export const revalidate = 300; // 5-minute ISR
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/properties/featured
