@@ -65,8 +65,8 @@ async function getDashboardData(userId: string): Promise<{
     const totalListings = await Property.countDocuments({ owner: userId })
     return {
       stats: { myListingsCount: totalListings, favoritesCount, unreadMessagesCount: unreadCount },
-      recentListings: myListings as Property[],
-      recentMessages: recentMessages as Message[],
+      recentListings: JSON.parse(JSON.stringify(myListings)) as Property[],
+      recentMessages: JSON.parse(JSON.stringify(recentMessages)) as Message[],
     }
   } catch (error) {
     console.error('Failed to fetch dashboard data:', error)

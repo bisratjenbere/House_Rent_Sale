@@ -1,24 +1,25 @@
 /**
- * Geocoding helpers using Nominatim (OpenStreetMap) — no API key required.
- * Drop-in replacement for the previous google-maps.ts geocoding functions.
+ * Geocoding helpers using Nominatim (OpenStreetMap) via our API proxy.
+ * Avoids CORS issues and ensures proper User-Agent headers for Nominatim usage policy.
  */
-
-const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org';
 
 /**
  * Geocode an address string to { lat, lng }.
  * Returns null if address not found. Throws on network/quota error.
  */
 export async function geocodeAddress(address: string): Promise<{ lat: number; lng: number } | null> {
-  const url = `${NOMINATIM_BASE}/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
-  const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+  const url = `/api/geocode?q=${encodeURIComponent(address)}`;
+  const res = await fetch(url);
 
   if (!res.ok) throw new Error('Geocoding request failed');
 
-  const data = await res.json();
-  if (!data.length) return null;
+  const json = await res.json();
+  
+  if (!json.success) {
+    throw new Error(json.error || 'Geocoding failed');
+  }
 
-  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  return json.data;
 }
 
 /**
@@ -27,11 +28,11 @@ export async function geocodeAddress(address: string): Promise<{ lat: number; ln
  */
 export async function reverseGeocode(lat: number, lng: number): Promise<string | null> {
   try {
-    const url = `${NOMINATIM_BASE}/reverse?format=json&lat=${lat}&lon=${lng}`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    const url = `/api/geocode?lat=${lat}&lng=${lng}`;
+    const res = await fetch(url);
     if (!res.ok) return null;
-    const data = await res.json();
-    return data.display_name ?? null;
+    const json = await res.json();
+    return json.success ? json.data?.address ?? null : null;
   } catch {
     return null;
   }

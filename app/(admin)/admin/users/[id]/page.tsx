@@ -30,7 +30,7 @@ async function getUserDetail(id: string): Promise<UserDetail | null> {
       .lean()
     if (!user) return null
     const stats = await getUserDetailStats(id)
-    return { ...user, ...stats } as UserDetail
+    return JSON.parse(JSON.stringify({ ...user, ...stats }))
   } catch {
     return null
   }

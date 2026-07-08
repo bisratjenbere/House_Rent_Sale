@@ -33,27 +33,30 @@ interface PopularCity {
 async function getFeaturedProperties() {
   try {
     await connectDB();
-    return await Property.find({ status: 'published', featured: true })
+    const properties = await Property.find({ status: 'published', featured: true })
       .sort({ createdAt: -1 }).limit(6)
       .populate('category', 'name slug')
       .populate('owner', 'name avatar').lean();
+    return JSON.parse(JSON.stringify(properties));
   } catch { return []; }
 }
 
 async function getLatestProperties() {
   try {
     await connectDB();
-    return await Property.find({ status: 'published' })
+    const properties = await Property.find({ status: 'published' })
       .sort({ createdAt: -1 }).limit(6)
       .populate('category', 'name slug')
       .populate('owner', 'name avatar').lean();
+    return JSON.parse(JSON.stringify(properties));
   } catch { return []; }
 }
 
 async function getCategories() {
   try {
     await connectDB();
-    return await Category.find({}).lean();
+    const categories = await Category.find({}).lean();
+    return JSON.parse(JSON.stringify(categories));
   } catch { return []; }
 }
 

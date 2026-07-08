@@ -10,6 +10,7 @@
  *   - tsx installed as a dev dependency
  */
 
+import 'dotenv/config';
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { connectDB } from '@/lib/db';
@@ -264,10 +265,26 @@ async function seed() {
       amenityIds = [amenityMap.get('Water Supply')!, amenityMap.get('Solar Power')!];
     }
 
-    const images = Array.from({ length: pt.imageCount }, (_, i) => ({
-      url: `https://res.cloudinary.com/demo/image/upload/v170000000${i + 1}/househub/${pt.city.toLowerCase().replace(/[^a-z]/g, '')}-${pt.type}-${i + 1}.jpg`,
-      publicId: `househub/${pt.city.toLowerCase().replace(/[^a-z]/g, '')}-${pt.type}-${i + 1}`,
-    }));
+    // Use Lorem Picsum for random real photos (no auth required)
+    // Picsum provides free random images similar to old Unsplash Source API
+    const seeds = {
+      house: [1, 48, 58, 106, 206],
+      apartment: [2, 22, 104, 152, 227],
+      villa: [8, 10, 40, 87, 111],
+      studio: [5, 28, 42, 169, 188],
+      land: [26, 33, 51, 73, 137],
+      'commercial-unit': [3, 7, 20, 54, 165],
+    };
+    
+    const seedArray = seeds[pt.type as keyof typeof seeds] || [1, 2, 3, 4, 5];
+    
+    const images = Array.from({ length: pt.imageCount }, (_, i) => {
+      const seedId = seedArray[i % seedArray.length];
+      return {
+        url: `https://picsum.photos/seed/${seedId}-${pt.city}/800/600`,
+        publicId: `househub/${pt.city.toLowerCase().replace(/[^a-z]/g, '')}-${pt.type}-${i + 1}`,
+      };
+    });
 
     // Assign owner: mix of agents and some regular users
     const ownerPool = pt.status === 'published' || pt.status === 'rented' || pt.status === 'sold'

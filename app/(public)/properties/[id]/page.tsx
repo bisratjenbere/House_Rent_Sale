@@ -58,7 +58,7 @@ async function getProperty(id: string): Promise<Property | null> {
       .populate('amenities', 'name icon')
       .populate('owner', 'name avatar email phone bio')
       .lean();
-    return property as Property | null;
+    return property ? JSON.parse(JSON.stringify(property)) : null;
   } catch (error) {
     console.error('Failed to fetch property:', id, error);
     throw error;

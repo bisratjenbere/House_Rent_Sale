@@ -69,7 +69,7 @@ async function getPropertyDetail(id: string): Promise<PropertyDetail | null> {
       .populate('amenities')
       .populate('owner', 'name email phone avatar')
       .lean()
-    return property as PropertyDetail | null
+    return property ? JSON.parse(JSON.stringify(property)) : null
   } catch {
     return null
   }

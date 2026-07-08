@@ -67,28 +67,28 @@ export function ImageUploader({
       const uploadedImages: ImageData[] = [];
 
       for (const file of files) {
-        // Get signature from backend
-        const signatureRes = await fetch("/api/upload/signature", {
-          method: "POST",
-        });
+        // Use unsigned upload (simpler, no signature needed)
+        const cloud_name = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+        const upload_preset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
 
-        if (!signatureRes.ok) {
-          throw new Error("Failed to get upload signature");
+        if (!cloud_name || !upload_preset) {
+          throw new Error("Cloudinary configuration missing. Please check environment variables.");
         }
 
-        const { data } = await signatureRes.json();
-        const { signature, timestamp, api_key, cloud_name, upload_preset, folder, allowed_formats, max_bytes } = data;
+        // Log upload parameters for debugging
+        console.log("Upload parameters:", {
+          cloud_name,
+          upload_preset,
+          file: file.name,
+          fileSize: file.size,
+          fileType: file.type,
+        });
 
-        // Upload to Cloudinary
+        // Upload to Cloudinary (unsigned)
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("signature", signature);
-        formData.append("timestamp", timestamp.toString());
-        formData.append("api_key", api_key);
         formData.append("upload_preset", upload_preset);
-        formData.append("folder", folder);
-        formData.append("allowed_formats", allowed_formats);
-        formData.append("max_bytes", max_bytes.toString());
+        formData.append("folder", "properties");
 
         const uploadRes = await fetch(
           `https://api.cloudinary.com/v1_1/${cloud_name}/image/upload`,
@@ -99,7 +99,26 @@ export function ImageUploader({
         );
 
         if (!uploadRes.ok) {
-          throw new Error(`Failed to upload ${file.name}`);
+          // Log the full error response from Cloudinary
+          let errorData: any = {};
+          const responseText = await uploadRes.text();
+          
+          try {
+            errorData = JSON.parse(responseText);
+          } catch (e) {
+            errorData = { raw: responseText };
+          }
+          
+          console.error("Cloudinary upload failed:", {
+            status: uploadRes.status,
+            statusText: uploadRes.statusText,
+            errorData,
+            file: file.name,
+            responseText: responseText.substring(0, 500), // First 500 chars
+          });
+          
+          const errorMessage = errorData.error?.message || errorData.message || uploadRes.statusText || "Unknown error";
+          throw new Error(`Failed to upload ${file.name}: ${errorMessage}`);
         }
 
         const uploadData = await uploadRes.json();
