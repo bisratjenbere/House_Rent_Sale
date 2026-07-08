@@ -20,8 +20,32 @@ export async function GET() {
     const count = await Property.countDocuments({ status: 'published' });
     info.publishedProperties = count;
 
-    const sample = await Property.findOne({ status: 'published' }, { _id: 1, title: 1 }).lean();
-    info.sampleProperty = sample;
+    const testId = '6a4e3e01e2c7d53022613cc0';
+
+    // Test 1: plain findOne
+    try {
+      const p1 = await Property.findOne({ _id: testId, status: 'published' }, { _id: 1, title: 1 }).lean();
+      info.test1_plainFindOne = p1 ? `✅ found: ${(p1 as any).title}` : '❌ not found';
+    } catch (e) {
+      info.test1_plainFindOne = `❌ error: ${e instanceof Error ? e.message : String(e)}`;
+    }
+
+    // Test 2: with populate
+    try {
+      const p2 = await Property.findOne({ _id: testId, status: 'published' })
+        .populate('category', 'name slug')
+        .populate('amenities', 'name icon')
+        .populate('owner', 'name avatar email phone bio')
+        .lean();
+      info.test2_withPopulate = p2 ? `✅ found: ${(p2 as any).title}` : '❌ not found';
+      if (p2) {
+        info.test2_category = (p2 as any).category;
+        info.test2_owner = (p2 as any).owner ? `✅ ${(p2 as any).owner.name}` : '❌ null';
+        info.test2_amenities = (p2 as any).amenities?.length;
+      }
+    } catch (e) {
+      info.test2_withPopulate = `❌ error: ${e instanceof Error ? e.message : String(e)}`;
+    }
   } catch (err) {
     info.db = `❌ ${err instanceof Error ? err.message : String(err)}`;
   }
