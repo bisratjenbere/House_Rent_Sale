@@ -47,7 +47,9 @@ function LoginForm() {
       if (result?.error) {
         setError(result.error);
       } else if (result?.ok) {
-        router.push('/dashboard');
+        const { getSession } = await import('next-auth/react');
+        const session = await getSession();
+        router.push(session?.user?.role === 'admin' ? '/admin' : '/dashboard');
         router.refresh();
       }
     } catch (err) {
