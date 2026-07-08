@@ -76,7 +76,7 @@ export function ImageUploader({
           throw new Error("Failed to get upload signature");
         }
 
-        const { signature, timestamp, cloudName, apiKey, folder } =
+        const { data: { signature, timestamp, cloudName, apiKey, folder } } =
           await signatureRes.json();
 
         // Upload to Cloudinary
