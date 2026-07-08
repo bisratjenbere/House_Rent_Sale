@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Bed, Bath, Car, Maximize, MapPin, Phone, Mail, MessageSquare, Star } from "lucide-react";
 import { connectDB } from "@/lib/db";
-import { Property } from "@/models";
+import { Property as PropertyModel } from "@/models";
 
 interface Property {
   _id: string;
@@ -53,7 +53,7 @@ interface Property {
 async function getProperty(id: string): Promise<Property | null> {
   try {
     await connectDB();
-    const property = await Property.findOne({ _id: id, status: 'published' })
+    const property = await PropertyModel.findOne({ _id: id, status: 'published' })
       .populate('category', 'name slug')
       .populate('amenities', 'name icon')
       .populate('owner', 'name avatar phone bio')
