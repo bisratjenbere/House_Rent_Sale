@@ -51,11 +51,11 @@ export function PropertyFilters({
 
   // Fetch categories on mount
   useEffect(() => {
-    fetch("/api/admin/categories")
+    fetch("/api/categories")
       .then((res) => res.json())
       .then((data) => {
-        if (data.success) {
-          setCategories(data.data || []);
+        if (data.success && Array.isArray(data.data)) {
+          setCategories(data.data);
         }
       })
       .catch((err) => console.error("Failed to fetch categories:", err));
