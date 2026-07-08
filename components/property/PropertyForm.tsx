@@ -115,20 +115,20 @@ export function PropertyForm({
     const fetchOptions = async () => {
       try {
         const [categoriesRes, amenitiesRes] = await Promise.all([
-          fetch("/api/admin/categories"),
-          fetch("/api/admin/amenities"),
+          fetch("/api/categories"),
+          fetch("/api/amenities"),
         ]);
 
         if (categoriesRes.ok) {
           const categoriesData = await categoriesRes.json();
-          if (categoriesData.success) {
+          if (categoriesData.success && Array.isArray(categoriesData.data)) {
             setCategories(categoriesData.data);
           }
         }
 
         if (amenitiesRes.ok) {
           const amenitiesData = await amenitiesRes.json();
-          if (amenitiesData.success) {
+          if (amenitiesData.success && Array.isArray(amenitiesData.data)) {
             setAmenities(amenitiesData.data);
           }
         }
