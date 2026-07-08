@@ -34,23 +34,14 @@ export default function EditPropertyPage() {
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const response = await fetch(`/api/properties/my?_id=${propertyId}`);
+        const response = await fetch(`/api/properties/${propertyId}`);
         const data = await response.json();
 
-        if (!data.success) {
-          throw new Error(data.error || "Failed to fetch property");
+        if (!response.ok || !data.success) {
+          throw new Error(data.error || "Property not found");
         }
 
-        // The /my endpoint returns an array, find the property by ID
-        const foundProperty = data.data?.properties?.find(
-          (p: Property) => p._id === propertyId
-        );
-
-        if (!foundProperty) {
-          throw new Error("Property not found");
-        }
-
-        setProperty(foundProperty);
+        setProperty(data.data);
       } catch (error) {
         console.error("Failed to fetch property:", error);
         setLoadError(error instanceof Error ? error.message : "Failed to load property");

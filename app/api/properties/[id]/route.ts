@@ -12,7 +12,7 @@ import {
 import { cleanupOrphanedImages } from '@/services/cloudinary.service';
 
 /**
- * Get a single property (public - only published properties)
+ * Get a single property (public - only published, or owner/admin can see any status)
  */
 export async function GET(
   request: NextRequest,
@@ -22,16 +22,24 @@ export async function GET(
   try {
     await connectDB();
 
-    // Only return published properties for public access
-    const property = await Property.findOne({
-      _id: id,
-      status: 'published',
-    })
+    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
+
+    const property = await Property.findById(id)
       .populate('category', 'name slug')
       .populate('amenities', 'name icon')
-      .populate('owner', 'name avatar phone bio'); // Explicit allowlist - never includes password/tokens/role/email
+      .populate('owner', 'name avatar phone bio');
 
     if (!property) {
+      return NextResponse.json(
+        { success: false, error: 'Property not found' },
+        { status: 404 }
+      );
+    }
+
+    // Non-published properties are only visible to owner or admin
+    const isOwner = token?.userId && property.owner._id.toString() === token.userId;
+    const isAdmin = token?.role === 'admin';
+    if (property.status !== 'published' && !isOwner && !isAdmin) {
       return NextResponse.json(
         { success: false, error: 'Property not found' },
         { status: 404 }
