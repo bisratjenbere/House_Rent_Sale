@@ -1,6 +1,11 @@
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, Home, Clock, FolderTree, Star } from 'lucide-react'
+import { connectDB } from '@/lib/db'
+import User from '@/models/User'
+import Property from '@/models/Property'
+import Category from '@/models/Category'
+import Amenity from '@/models/Amenity'
 
 interface DashboardStats {
   totalUsers: number
@@ -11,17 +16,24 @@ interface DashboardStats {
 }
 
 async function getDashboardStats(): Promise<DashboardStats> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-  const res = await fetch(`${baseUrl}/api/admin/dashboard`, {
-    cache: 'no-store',
-  })
+  await connectDB()
 
-  if (!res.ok) {
-    throw new Error('Failed to fetch dashboard stats')
+  const [totalUsers, totalProperties, pendingApprovals, totalCategories, totalAmenities] =
+    await Promise.all([
+      User.countDocuments({}),
+      Property.countDocuments({}),
+      Property.countDocuments({ status: 'pending_review' }),
+      Category.countDocuments({}),
+      Amenity.countDocuments({}),
+    ])
+
+  return {
+    totalUsers,
+    totalProperties,
+    pendingApprovals,
+    totalCategories,
+    totalAmenities,
   }
-
-  const json = await res.json()
-  return json.data.stats
 }
 
 export default async function AdminDashboardPage() {

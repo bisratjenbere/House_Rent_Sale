@@ -10,17 +10,9 @@ import { ReviewsSection } from "@/components/property/ReviewsSection";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Bed,
-  Bath,
-  Car,
-  Maximize,
-  MapPin,
-  Phone,
-  Mail,
-  MessageSquare,
-  Star,
-} from "lucide-react";
+import { Bed, Bath, Car, Maximize, MapPin, Phone, Mail, MessageSquare, Star } from "lucide-react";
+import { connectDB } from "@/lib/db";
+import { Property } from "@/models";
 
 interface Property {
   _id: string;
@@ -60,19 +52,15 @@ interface Property {
 
 async function getProperty(id: string): Promise<Property | null> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const response = await fetch(`${baseUrl}/api/properties/${id}`, {
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const data = await response.json();
-    return data.success ? data.data : null;
+    await connectDB();
+    const property = await Property.findOne({ _id: id, status: 'published' })
+      .populate('category', 'name slug')
+      .populate('amenities', 'name icon')
+      .populate('owner', 'name avatar phone bio')
+      .lean();
+    return property as Property | null;
   } catch (error) {
-    console.error("Failed to fetch property:", error);
+    console.error('Failed to fetch property:', error);
     return null;
   }
 }

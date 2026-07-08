@@ -22,6 +22,8 @@ import { PropertyTypeBadge } from '@/components/property/PropertyTypeBadge'
 import { PriceDisplay } from '@/components/property/PriceDisplay'
 import { PropertyMapSection } from '@/components/property/PropertyMapSection'
 import { AdminPropertyActions } from '@/components/admin/AdminPropertyActions'
+import { connectDB } from '@/lib/db'
+import { Property } from '@/models'
 
 interface PropertyDetail {
   _id: string
@@ -60,20 +62,17 @@ interface PropertyDetail {
 }
 
 async function getPropertyDetail(id: string): Promise<PropertyDetail | null> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-  const res = await fetch(`${baseUrl}/api/admin/properties/${id}`, {
-    cache: 'no-store',
-  })
-
-  if (!res.ok) {
-    if (res.status === 404) {
-      return null
-    }
-    throw new Error('Failed to fetch property details')
+  try {
+    await connectDB()
+    const property = await Property.findById(id)
+      .populate('category')
+      .populate('amenities')
+      .populate('owner', 'name email phone avatar')
+      .lean()
+    return property as PropertyDetail | null
+  } catch {
+    return null
   }
-
-  const json = await res.json()
-  return json.data.property
 }
 
 function getStatusColor(status: string) {

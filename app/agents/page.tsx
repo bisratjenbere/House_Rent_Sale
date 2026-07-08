@@ -2,6 +2,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { connectDB } from '@/lib/db'
+import { Property } from '@/models'
 
 interface Agent {
   userId: string
@@ -25,25 +27,36 @@ interface AgentsResponse {
 
 async function getAgents(page: number = 1): Promise<AgentsResponse> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/agents?page=${page}`, {
-      cache: 'no-store', // Agents list should be fresh
-    })
+    await connectDB()
+    const limit = 20
+    const skip = (page - 1) * limit
 
-    if (!res.ok) {
-      return {
-        success: false,
-        data: { agents: [], page: 1, limit: 20, total: 0, totalPages: 0 },
-      }
+    const [result] = await Property.aggregate([
+      { $match: { status: 'published' } },
+      { $group: { _id: '$owner', propertyCount: { $sum: 1 } } },
+      {
+        $facet: {
+          total: [{ $count: 'count' }],
+          agents: [
+            { $sort: { propertyCount: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'user' } },
+            { $unwind: '$user' },
+            { $project: { _id: 0, userId: '$_id', name: '$user.name', avatar: '$user.avatar', phone: '$user.phone', bio: '$user.bio', propertyCount: 1 } },
+          ],
+        },
+      },
+    ])
+
+    const total = result.total[0]?.count ?? 0
+    return {
+      success: true,
+      data: { agents: result.agents, page, limit, total, totalPages: Math.ceil(total / limit) },
     }
-
-    return res.json()
   } catch (error) {
     console.error('Failed to fetch agents:', error)
-    return {
-      success: false,
-      data: { agents: [], page: 1, limit: 20, total: 0, totalPages: 0 },
-    }
+    return { success: false, data: { agents: [], page: 1, limit: 20, total: 0, totalPages: 0 } }
   }
 }
 

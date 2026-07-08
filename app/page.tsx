@@ -5,9 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SearchBar } from "@/components/home/SearchBar";
 import { PropertyGrid } from "@/components/property/PropertyGrid";
+import { connectDB } from "@/lib/db";
+import { Property, Category } from "@/models";
 
-// Revalidate every 5 minutes (300 seconds)
-export const revalidate = 300;
+export const dynamic = 'force-dynamic';
 
 interface Category {
   _id: string;
@@ -31,77 +32,54 @@ interface PopularCity {
 
 async function getFeaturedProperties() {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/properties/featured`,
-      { next: { revalidate: 300 } }
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.success ? data.data : [];
-  } catch (error) {
-    console.error("Failed to fetch featured properties:", error);
-    return [];
-  }
+    await connectDB();
+    return await Property.find({ status: 'published', featured: true })
+      .sort({ createdAt: -1 }).limit(6)
+      .populate('category', 'name slug')
+      .populate('owner', 'name avatar').lean();
+  } catch { return []; }
 }
 
 async function getLatestProperties() {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/properties/latest`,
-      { next: { revalidate: 300 } }
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.success ? data.data : [];
-  } catch (error) {
-    console.error("Failed to fetch latest properties:", error);
-    return [];
-  }
+    await connectDB();
+    return await Property.find({ status: 'published' })
+      .sort({ createdAt: -1 }).limit(6)
+      .populate('category', 'name slug')
+      .populate('owner', 'name avatar').lean();
+  } catch { return []; }
 }
 
 async function getCategories() {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/admin/categories`,
-      { next: { revalidate: 300 } }
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.success ? data.data : [];
-  } catch (error) {
-    console.error("Failed to fetch categories:", error);
-    return [];
-  }
+    await connectDB();
+    return await Category.find({}).lean();
+  } catch { return []; }
 }
 
 async function getStats() {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/stats/public`,
-      { next: { revalidate: 300 } }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.success ? data.data : null;
-  } catch (error) {
-    console.error("Failed to fetch stats:", error);
-    return null;
-  }
+    await connectDB();
+    const [totalProperties, totalCategories, ownerIds, cityIds] = await Promise.all([
+      Property.countDocuments({ status: 'published' }),
+      Category.countDocuments({}),
+      Property.distinct('owner', { status: 'published' }),
+      Property.distinct('city', { status: 'published' }),
+    ]);
+    return { totalProperties, totalCategories, totalAgents: ownerIds.length, totalCities: cityIds.length };
+  } catch { return null; }
 }
 
 async function getPopularCities() {
   try {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/properties/cities/popular`,
-      { next: { revalidate: 300 } }
-    );
-    if (!res.ok) return [];
-    const data = await res.json();
-    return data.success ? data.data : [];
-  } catch (error) {
-    console.error("Failed to fetch popular cities:", error);
-    return [];
-  }
+    await connectDB();
+    return await Property.aggregate([
+      { $match: { status: 'published' } },
+      { $group: { _id: '$city', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]);
+  } catch { return []; }
 }
 
 const TESTIMONIALS = [

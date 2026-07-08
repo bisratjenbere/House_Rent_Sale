@@ -5,6 +5,9 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Mail, Calendar, Home, MessageSquare, Star, Heart } from 'lucide-react'
 import { notFound } from 'next/navigation'
+import { connectDB } from '@/lib/db'
+import { User } from '@/models'
+import { getUserDetailStats } from '@/services/admin.service'
 
 interface UserDetail {
   _id: string
@@ -20,20 +23,17 @@ interface UserDetail {
 }
 
 async function getUserDetail(id: string): Promise<UserDetail | null> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000'
-  const res = await fetch(`${baseUrl}/api/admin/users/${id}`, {
-    cache: 'no-store',
-  })
-
-  if (!res.ok) {
-    if (res.status === 404) {
-      return null
-    }
-    throw new Error('Failed to fetch user details')
+  try {
+    await connectDB()
+    const user = await User.findById(id)
+      .select('-password -verificationToken -verificationTokenExpires -resetPasswordToken -resetPasswordExpires')
+      .lean()
+    if (!user) return null
+    const stats = await getUserDetailStats(id)
+    return { ...user, ...stats } as UserDetail
+  } catch {
+    return null
   }
-
-  const json = await res.json()
-  return json.data.user
 }
 
 export default async function AdminUserDetailPage({

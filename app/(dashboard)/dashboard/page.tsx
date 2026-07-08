@@ -6,13 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { PropertyCard } from '@/components/property/PropertyCard'
 import { cn } from '@/lib/utils'
-import { 
-  Home, 
-  Heart, 
-  MessageSquare, 
-  PlusCircle,
-  Search 
-} from 'lucide-react'
+import { Home, Heart, MessageSquare, PlusCircle, Search } from 'lucide-react'
+import { connectDB } from '@/lib/db'
+import { Property, Favorite, Message } from '@/models'
+import { authOptions } from '@/lib/auth'
 
 interface DashboardStats {
   myListingsCount: number
@@ -49,58 +46,42 @@ interface Message {
   isRead: boolean
 }
 
-async function getDashboardData(): Promise<{
+async function getDashboardData(userId: string): Promise<{
   stats: DashboardStats
   recentListings: Property[]
   recentMessages: Message[]
 }> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-
   try {
-    // Fetch all data in parallel
-    const [myListingsRes, favoritesRes, messagesRes, unreadCountRes] = await Promise.all([
-      fetch(`${baseUrl}/api/properties/my?limit=3`, { cache: 'no-store' }),
-      fetch(`${baseUrl}/api/favorites?limit=1`, { cache: 'no-store' }),
-      fetch(`${baseUrl}/api/messages?limit=3`, { cache: 'no-store' }),
-      fetch(`${baseUrl}/api/messages/unread-count`, { cache: 'no-store' }),
+    await connectDB()
+    const [myListings, favoritesCount, recentMessages, unreadCount] = await Promise.all([
+      Property.find({ owner: userId }).sort({ createdAt: -1 }).limit(3).lean(),
+      Favorite.countDocuments({ user: userId }),
+      Message.find({ receiver: userId }).sort({ createdAt: -1 }).limit(3)
+        .populate('property', 'title images')
+        .populate('sender', 'name')
+        .lean(),
+      Message.countDocuments({ receiver: userId, isRead: false }),
     ])
-
-    const myListings = await myListingsRes.json()
-    const favorites = await favoritesRes.json()
-    const messages = await messagesRes.json()
-    const unreadCount = await unreadCountRes.json()
-
+    const totalListings = await Property.countDocuments({ owner: userId })
     return {
-      stats: {
-        myListingsCount: myListings.success ? myListings.data.total : 0,
-        favoritesCount: favorites.success ? favorites.data.total : 0,
-        unreadMessagesCount: unreadCount.success ? unreadCount.data.count : 0,
-      },
-      recentListings: myListings.success ? myListings.data.properties.slice(0, 3) : [],
-      recentMessages: messages.success ? messages.data.conversations.slice(0, 3) : [],
+      stats: { myListingsCount: totalListings, favoritesCount, unreadMessagesCount: unreadCount },
+      recentListings: myListings as Property[],
+      recentMessages: recentMessages as Message[],
     }
   } catch (error) {
     console.error('Failed to fetch dashboard data:', error)
-    return {
-      stats: {
-        myListingsCount: 0,
-        favoritesCount: 0,
-        unreadMessagesCount: 0,
-      },
-      recentListings: [],
-      recentMessages: [],
-    }
+    return { stats: { myListingsCount: 0, favoritesCount: 0, unreadMessagesCount: 0 }, recentListings: [], recentMessages: [] }
   }
 }
 
 export default async function DashboardPage() {
-  const session = await getServerSession()
+  const session = await getServerSession(authOptions)
 
   if (!session) {
     redirect('/login')
   }
 
-  const { stats, recentListings, recentMessages } = await getDashboardData()
+  const { stats, recentListings, recentMessages } = await getDashboardData(session.user.id)
 
   return (
     <div className="container mx-auto px-4 py-8">
