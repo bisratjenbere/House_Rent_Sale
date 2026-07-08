@@ -89,10 +89,13 @@ export function useProperties(options: UsePropertiesOptions = {}): UseProperties
         throw new Error(data.error || "Failed to fetch properties");
       }
 
+      const incoming = data.data?.properties;
+      const safeList = Array.isArray(incoming) ? incoming : [];
+
       if (cursor) {
-        setProperties((prev) => [...prev, ...(data.data?.properties || [])]);
+        setProperties((prev) => [...prev, ...safeList]);
       } else {
-        setProperties(data.data?.properties || []);
+        setProperties(safeList);
       }
 
       setNextCursor(data.data?.nextCursor || null);

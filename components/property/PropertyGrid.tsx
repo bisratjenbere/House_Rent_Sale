@@ -39,6 +39,8 @@ export function PropertyGrid({
   favoritedIds = new Set(),
   onFavoriteToggle
 }: PropertyGridProps) {
+  const safeProperties = Array.isArray(properties) ? properties : [];
+
   // Loading State
   if (loading) {
     return (
@@ -56,7 +58,7 @@ export function PropertyGrid({
   }
 
   // Empty State
-  if (properties.length === 0) {
+  if (safeProperties.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="space-y-4">
@@ -79,7 +81,7 @@ export function PropertyGrid({
   // Properties Grid
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {properties.map((property) => (
+      {safeProperties.map((property) => (
         <PropertyCard
           key={property._id}
           property={property}

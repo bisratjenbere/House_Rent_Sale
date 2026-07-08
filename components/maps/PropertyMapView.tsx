@@ -34,8 +34,9 @@ function BoundsAdjuster({ positions }: { positions: [number, number][] }) {
 export function PropertyMapView({ properties, onPropertyClick }: PropertyMapViewProps) {
   const { isLoaded } = useLeaflet();
 
-  const valid = properties.filter((p) => p.location?.lat && p.location?.lng);
-  const noLocationCount = properties.length - valid.length;
+  const safeProperties = Array.isArray(properties) ? properties : [];
+  const valid = safeProperties.filter((p) => p.location?.lat && p.location?.lng);
+  const noLocationCount = safeProperties.length - valid.length;
   const positions = valid.map((p) => [p.location!.lat, p.location!.lng] as [number, number]);
 
   if (!isLoaded) {
