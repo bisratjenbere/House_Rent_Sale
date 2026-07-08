@@ -46,7 +46,7 @@ export function PropertyFilters({
     maxPrice: searchParams.get("maxPrice") || "",
     bedrooms: searchParams.get("bedrooms") || "",
     bathrooms: searchParams.get("bathrooms") || "",
-    sort: searchParams.get("sort") || "createdAt:desc",
+    sort: searchParams.get("sort") || "newest",
   });
 
   // Fetch categories on mount
@@ -255,10 +255,10 @@ export function PropertyFilters({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="createdAt:desc">Newest First</SelectItem>
-            <SelectItem value="createdAt:asc">Oldest First</SelectItem>
-            <SelectItem value="price:asc">Price: Low to High</SelectItem>
-            <SelectItem value="price:desc">Price: High to Low</SelectItem>
+            <SelectItem value="newest">Newest First</SelectItem>
+            <SelectItem value="oldest">Oldest First</SelectItem>
+            <SelectItem value="price-asc">Price: Low to High</SelectItem>
+            <SelectItem value="price-desc">Price: High to Low</SelectItem>
           </SelectContent>
         </Select>
       </div>
