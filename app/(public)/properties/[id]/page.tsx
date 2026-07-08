@@ -56,21 +56,27 @@ async function getProperty(id: string): Promise<Property | null> {
     const property = await PropertyModel.findOne({ _id: id, status: 'published' })
       .populate('category', 'name slug')
       .populate('amenities', 'name icon')
-      .populate('owner', 'name avatar phone bio')
+      .populate('owner', 'name avatar email phone bio')
       .lean();
     return property as Property | null;
   } catch (error) {
-    console.error('Failed to fetch property:', error);
-    return null;
+    console.error('Failed to fetch property:', id, error);
+    throw error;
   }
 }
 
 export async function generateMetadata({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }): Promise<Metadata> {
-  const property = await getProperty(params.id);
+  const { id } = await params;
+  let property: Property | null = null;
+  try {
+    property = await getProperty(id);
+  } catch {
+    return { title: "Property Not Found" };
+  }
 
   if (!property) {
     return {
@@ -92,9 +98,15 @@ export async function generateMetadata({
 export default async function PropertyDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const property = await getProperty(params.id);
+  const { id } = await params;
+  let property: Property | null = null;
+  try {
+    property = await getProperty(id);
+  } catch {
+    notFound();
+  }
 
   if (!property) {
     notFound();
