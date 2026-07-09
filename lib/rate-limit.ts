@@ -39,16 +39,19 @@ export function getClientIp(request: NextRequest): string {
  * @param identifier - Unique identifier for the rate limit (IP address or user ID)
  * @param limit - Maximum number of requests allowed
  * @param windowSeconds - Time window in seconds
+ * @param scope - Optional scope to create separate buckets per endpoint/action (e.g., 'messages:unread', 'favorites:list')
  * @returns { success: boolean, error?: string }
  */
 export async function checkRateLimit(
   identifier: string,
   limit: number,
-  windowSeconds: number
+  windowSeconds: number,
+  scope?: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
     const redisClient = getRedisClient();
-    const key = `rate_limit:${identifier}`;
+    // Include scope in the key to create separate buckets per endpoint
+    const key = scope ? `rate_limit:${scope}:${identifier}` : `rate_limit:${identifier}`;
 
     // Increment the counter
     const count = await redisClient.incr(key);

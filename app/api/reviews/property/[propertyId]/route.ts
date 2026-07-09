@@ -17,14 +17,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     await connectDB();
 
-    const [reviews, total] = await Promise.all([
+    const [reviewDocs, total] = await Promise.all([
       Review.find({ property: propertyId })
         .populate('user', 'name avatar')
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
-        .limit(limit),
+        .limit(limit)
+        .lean(),
       Review.countDocuments({ property: propertyId }),
     ]);
+
+    // Transform to match frontend expectations (user -> reviewer)
+    const reviews = reviewDocs.map((review: any) => ({
+      _id: review._id,
+      rating: review.rating,
+      comment: review.comment,
+      reviewer: review.user, // Map user to reviewer
+      createdAt: review.createdAt,
+    }));
 
     return NextResponse.json({ success: true, data: { reviews, total, page, pages: Math.ceil(total / limit) } });
   } catch (error) {

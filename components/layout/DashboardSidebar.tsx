@@ -29,6 +29,7 @@ interface DashboardLink {
   label: string;
   icon: React.ElementType;
   badge?: boolean;
+  exact?: boolean;
 }
 
 const DASHBOARD_LINKS: DashboardLink[] = [
@@ -46,6 +47,7 @@ const DASHBOARD_LINKS: DashboardLink[] = [
     href: "/dashboard/properties/new",
     label: "Add Property",
     icon: PlusCircle,
+    exact: true,
   },
   {
     href: "/dashboard/favorites",
@@ -79,16 +81,19 @@ function SidebarNav({
 }) {
   const pathname = usePathname();
 
-  const isActive = (href: string) => {
-    if (href === "/dashboard") return pathname === href;
-    return pathname.startsWith(href);
+  const isActive = (link: DashboardLink) => {
+    if (link.exact || link.href === "/dashboard") return pathname === link.href;
+    if (link.href === "/dashboard/properties") {
+      return (pathname === "/dashboard/properties" || pathname.startsWith("/dashboard/properties/")) && pathname !== "/dashboard/properties/new";
+    }
+    return pathname === link.href || pathname.startsWith(link.href + "/");
   };
 
   return (
     <nav className="p-4 space-y-1">
       {DASHBOARD_LINKS.map((link) => {
         const Icon = link.icon;
-        const active = isActive(link.href);
+        const active = isActive(link);
         const showBadge = link.badge && unreadMessages > 0;
 
         return (

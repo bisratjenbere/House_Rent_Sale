@@ -21,7 +21,8 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rateLimitResult = await checkRateLimit(token.userId as string, 60, 60);
+    // Higher limit for polling — users poll every 30s, so 120 req/min allows safe headroom
+    const rateLimitResult = await checkRateLimit(token.userId as string, 120, 60);
     if (!rateLimitResult.success) {
       return NextResponse.json({ success: false, error: rateLimitResult.error }, { status: 429 });
     }

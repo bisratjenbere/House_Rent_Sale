@@ -21,7 +21,7 @@ interface Review {
 
 interface ReviewStats {
   averageRating: number;
-  totalReviews: number;
+  reviewCount: number;
   ratingDistribution: {
     1: number;
     2: number;
@@ -106,7 +106,7 @@ export function ReviewsSection({ propertyId }: ReviewsSectionProps) {
       <h2 className="font-display text-2xl font-semibold">Reviews</h2>
 
       {/* Stats Summary */}
-      {stats && stats.totalReviews > 0 && (
+      {stats && stats.reviewCount > 0 && (
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center gap-8">
@@ -128,7 +128,7 @@ export function ReviewsSection({ propertyId }: ReviewsSectionProps) {
                   ))}
                 </div>
                 <p className="text-sm text-muted-foreground mt-1">
-                  {stats.totalReviews} review{stats.totalReviews !== 1 ? "s" : ""}
+                  {stats.reviewCount} review{stats.reviewCount !== 1 ? "s" : ""}
                 </p>
               </div>
 
@@ -137,8 +137,8 @@ export function ReviewsSection({ propertyId }: ReviewsSectionProps) {
                 {[5, 4, 3, 2, 1].map((rating) => {
                   const count = stats.ratingDistribution[rating as keyof typeof stats.ratingDistribution] || 0;
                   const percentage =
-                    stats.totalReviews > 0
-                      ? (count / stats.totalReviews) * 100
+                    stats.reviewCount > 0
+                      ? (count / stats.reviewCount) * 100
                       : 0;
 
                   return (
@@ -225,7 +225,7 @@ export function ReviewsSection({ propertyId }: ReviewsSectionProps) {
             </Card>
           ))}
         </div>
-      ) : stats && stats.totalReviews === 0 ? (
+      ) : stats && stats.reviewCount === 0 ? (
         <p className="text-muted-foreground text-center py-8">
           No reviews yet. Be the first to review this property!
         </p>

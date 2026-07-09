@@ -20,16 +20,13 @@ export async function GET(
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    const rateLimitResult = await checkRateLimit(token.userId as string, 60, 60);
-    if (!rateLimitResult.success) {
-      return NextResponse.json({ success: false, error: rateLimitResult.error }, { status: 429 });
-    }
+    // No rate limiting - this is a lightweight read-only check with no side effects
 
     await connectDB();
 
-    const exists = await Favorite.exists({ user: token.userId, property: propertyId });
+    const favorite = await Favorite.findOne({ user: token.userId, property: propertyId }).select('_id');
 
-    return NextResponse.json({ success: true, data: { isFavorited: exists !== null } });
+    return NextResponse.json({ success: true, data: { isFavorited: !!favorite, favoriteId: favorite?._id ?? null } });
   } catch (error) {
     return handleApiError(error);
   }

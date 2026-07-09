@@ -38,11 +38,26 @@ export async function checkReviewEligibility(userId: string, propertyId: string)
   return { eligible: true };
 }
 
-export async function calculateReviewStats(propertyId: string): Promise<{ averageRating: number; reviewCount: number }> {
+export async function calculateReviewStats(propertyId: string): Promise<{ averageRating: number; reviewCount: number; ratingDistribution: { 1: number; 2: number; 3: number; 4: number; 5: number } }> {
   const reviews = await Review.find({ property: propertyId }).select('rating');
-  if (reviews.length === 0) return { averageRating: 0, reviewCount: 0 };
-  const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
-  return { averageRating: Math.round((sum / reviews.length) * 10) / 10, reviewCount: reviews.length };
+  
+  const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  let sum = 0;
+  
+  for (const review of reviews) {
+    sum += review.rating;
+    ratingDistribution[review.rating as keyof typeof ratingDistribution]++;
+  }
+  
+  if (reviews.length === 0) {
+    return { averageRating: 0, reviewCount: 0, ratingDistribution };
+  }
+  
+  return { 
+    averageRating: Math.round((sum / reviews.length) * 10) / 10, 
+    reviewCount: reviews.length,
+    ratingDistribution
+  };
 }
 
 export async function assertReviewOwner(reviewId: string, userId: string) {

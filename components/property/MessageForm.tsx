@@ -5,8 +5,9 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Send } from "lucide-react";
+import { Send, Info } from "lucide-react";
 import { toast } from "sonner";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface MessageFormProps {
   propertyId: string;
@@ -26,6 +27,9 @@ export function MessageForm({
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // Check if the current user is the property owner
+  const isOwner = session?.user?.id === ownerId;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -37,6 +41,12 @@ export function MessageForm({
           onClick: () => router.push("/login"),
         },
       });
+      return;
+    }
+
+    // Check if user is trying to message themselves
+    if (isOwner) {
+      toast.error("You cannot send a message to yourself");
       return;
     }
 
@@ -85,6 +95,24 @@ export function MessageForm({
         <div className="h-24 bg-muted rounded animate-pulse" />
         <div className="h-10 bg-muted rounded animate-pulse" />
       </div>
+    );
+  }
+
+  // Show info card if user is the property owner
+  if (isOwner && status === "authenticated") {
+    return (
+      <Card className="border-muted">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <Info className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+            <div>
+              <p className="text-sm text-muted-foreground">
+                This is your property. You cannot send messages to yourself.
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 

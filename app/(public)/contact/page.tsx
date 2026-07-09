@@ -43,6 +43,13 @@ export default function ContactPage() {
       const data = await response.json();
 
       if (!response.ok) {
+        // Handle Zod validation errors with details
+        if (data.details && Array.isArray(data.details)) {
+          const errorMessages = data.details
+            .map((issue: { path: string[]; message: string }) => issue.message)
+            .join(". ");
+          throw new Error(errorMessages);
+        }
         throw new Error(data.error || "Failed to send message");
       }
 

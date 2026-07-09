@@ -10,7 +10,8 @@ export async function GET(request: NextRequest) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
     if (!token?.userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-    const rateLimitResult = await checkRateLimit(token.userId as string, 60, 60);
+    // Higher limit for polling endpoint (120 req/min = 2 req/sec)
+    const rateLimitResult = await checkRateLimit(token.userId as string, 120, 60, 'notifications:unread');
     if (!rateLimitResult.success) return NextResponse.json({ success: false, error: rateLimitResult.error }, { status: 429 });
 
     await connectDB();

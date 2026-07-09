@@ -10,8 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET });
     if (!token?.userId) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
 
-    const rateLimitResult = await checkRateLimit(token.userId as string, 60, 60);
-    if (!rateLimitResult.success) return NextResponse.json({ success: false, error: rateLimitResult.error }, { status: 429 });
+    // No rate limiting - this is a lightweight read-only check with no side effects
 
     const { propertyId } = await params;
     await connectDB();

@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { PropertyTypeBadge } from "@/components/property/PropertyTypeBadge";
 import { PriceDisplay } from "@/components/property/PriceDisplay";
+import { FavoriteButton } from "@/components/property/FavoriteButton";
 import { PropertyMapSection } from "@/components/property/PropertyMapSection";
 import { MessageForm } from "@/components/property/MessageForm";
 import { ReviewsSection } from "@/components/property/ReviewsSection";
@@ -197,6 +198,7 @@ export default async function PropertyDetailPage({
                     </span>
                   </div>
                 </div>
+                <FavoriteButton propertyId={property._id} />
               </div>
 
               <PriceDisplay price={property.price} type={property.listingType} />
