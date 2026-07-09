@@ -223,41 +223,28 @@ export function useMessages(): UseMessagesReturn {
     }
   }, []);
 
-  // Polling function
+  // Polling function — use ref to avoid stale closures recreating the interval
+  const activePropertyIdRef = useRef<string | null>(null);
+  const conversationsPageRef = useRef<number>(1);
+
+  useEffect(() => { activePropertyIdRef.current = activePropertyId; }, [activePropertyId]);
+  useEffect(() => { conversationsPageRef.current = conversationsPage; }, [conversationsPage]);
+
   const poll = useCallback(async () => {
-    // Fetch unread count
     await fetchUnreadCount();
-
-    // Refresh conversations if on conversations list
-    if (!activePropertyId) {
-      await fetchConversations(conversationsPage);
+    if (!activePropertyIdRef.current) {
+      await fetchConversations(conversationsPageRef.current);
+    } else {
+      await fetchThread(activePropertyIdRef.current);
     }
-
-    // Refresh active thread if viewing a thread
-    if (activePropertyId) {
-      await fetchThread(activePropertyId);
-    }
-  }, [
-    activePropertyId,
-    conversationsPage,
-    fetchConversations,
-    fetchThread,
-    fetchUnreadCount,
-  ]);
+  }, [fetchUnreadCount, fetchConversations, fetchThread]);
 
   // Start polling
   const startPolling = useCallback(() => {
-    if (pollingIntervalRef.current) return; // Already polling
-
+    if (pollingIntervalRef.current) return;
     setIsPolling(true);
-
-    // Poll immediately
     poll();
-
-    // Set up interval
-    pollingIntervalRef.current = setInterval(() => {
-      poll();
-    }, POLLING_INTERVAL);
+    pollingIntervalRef.current = setInterval(poll, POLLING_INTERVAL);
   }, [poll]);
 
   // Stop polling

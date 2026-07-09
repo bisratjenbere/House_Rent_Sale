@@ -36,8 +36,11 @@ export async function GET(request: NextRequest) {
     const filter: Record<string, unknown> = {};
     if (status) filter.status = status;
     if (search) {
-      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      filter.$or = [{ title: regex }, { city: regex }];
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { title: { $regex: escaped, $options: 'i' } },
+        { city: { $regex: escaped, $options: 'i' } },
+      ];
     }
 
     const skip = (page - 1) * limit;

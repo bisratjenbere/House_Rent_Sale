@@ -37,8 +37,11 @@ export async function GET(request: NextRequest) {
     const filter: Record<string, unknown> = {};
     if (role) filter.role = role;
     if (search) {
-      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
-      filter.$or = [{ name: regex }, { email: regex }];
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { name: { $regex: escaped, $options: 'i' } },
+        { email: { $regex: escaped, $options: 'i' } },
+      ];
     }
 
     const [total, users] = await Promise.all([

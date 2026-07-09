@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { PropertyTypeBadge } from "@/components/property/PropertyTypeBadge";
@@ -51,7 +52,7 @@ interface Property {
   updatedAt: string;
 }
 
-async function getProperty(id: string): Promise<Property | null> {
+const getProperty = cache(async (id: string): Promise<Property | null> => {
   try {
     await connectDB();
     const property = await PropertyModel.findOne({ _id: id, status: 'published' })
@@ -61,10 +62,10 @@ async function getProperty(id: string): Promise<Property | null> {
       .lean();
     return property ? JSON.parse(JSON.stringify(property)) : null;
   } catch (error) {
-    console.error('Failed to fetch property:', id, error);
+    console.error('Failed to fetch property:', error);
     throw error;
   }
-}
+});
 
 export async function generateMetadata({
   params,
