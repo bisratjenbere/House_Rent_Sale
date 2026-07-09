@@ -1,6 +1,6 @@
 # 🏠 House Rent & Sale
 
-A full-stack real estate platform for listing, searching, and managing properties for rent or sale — built with Next.js 15, MongoDB, and Cloudinary.
+A full-stack real estate platform for listing, searching, and managing properties for rent or sale — built with Next.js, MongoDB, and Cloudinary.
 
 🔗 **Live Demo:** [https://house-rent-sale-puce.vercel.app](https://house-rent-sale-puce.vercel.app)
 
@@ -8,10 +8,10 @@ A full-stack real estate platform for listing, searching, and managing propertie
 
 ## ✨ Features
 
-- 🔐 Authentication — register, login, email verification, password reset (NextAuth + Resend)
-- 🏡 Property listings — create, edit, delete with image uploads (Cloudinary)
+- 🔐 Authentication — register, login, email verification, password reset
+- 🏡 Property listings — create, edit, delete with image uploads
 - 🔍 Advanced search & filters — by type, price, location, amenities
-- 🗺️ Interactive maps — view properties on a map (Leaflet / OpenStreetMap)
+- 🗺️ Interactive maps — view properties on a map
 - 💬 Messaging — contact agents/owners directly
 - ❤️ Favorites — save properties to your dashboard
 - ⭐ Reviews — leave and read property reviews
@@ -26,7 +26,7 @@ A full-stack real estate platform for listing, searching, and managing propertie
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 15 (App Router) |
+| Framework | Next.js 16 (App Router) |
 | Language | TypeScript |
 | Styling | Tailwind CSS + shadcn/ui |
 | Database | MongoDB (Mongoose) |
@@ -41,26 +41,19 @@ A full-stack real estate platform for listing, searching, and managing propertie
 
 ## 🚀 Getting Started
 
-### 1. Clone the repo
-
 ```bash
-git clone https://github.com/bisratjenbere/remote-task.git
-cd remote-task
-```
-
-### 2. Install dependencies
-
-```bash
+git clone https://github.com/bisratjenbere/House_Rent_Sale.git
+cd House_Rent_Sale
 npm install
-```
-
-### 3. Set up environment variables
-
-```bash
 cp .env.example .env
+npm run dev
 ```
 
-Fill in your `.env` file:
+Open [http://localhost:3000](http://localhost:3000)
+
+---
+
+## 🔑 Environment Variables
 
 ```env
 # MongoDB
@@ -84,54 +77,10 @@ CLOUDINARY_API_KEY=your-api-key
 CLOUDINARY_API_SECRET=your-api-secret
 CLOUDINARY_UPLOAD_PRESET=your-upload-preset
 
-# Map defaults (Addis Ababa)
+# Map defaults
 NEXT_PUBLIC_DEFAULT_MAP_LAT=9.03
 NEXT_PUBLIC_DEFAULT_MAP_LNG=38.74
 ```
-
-### 4. Run the development server
-
-```bash
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000)
-
-### 5. (Optional) Seed the database
-
-```bash
-npm run seed
-```
-
----
-
-## 📁 Project Structure
-
-```
-├── app/                  # Next.js App Router pages & API routes
-│   ├── (auth)/           # Login, register, password reset
-│   ├── (dashboard)/      # User dashboard
-│   ├── (admin)/          # Admin panel
-│   ├── properties/       # Property listing & detail pages
-│   └── api/              # REST API endpoints
-├── components/           # Reusable UI components
-├── lib/                  # Utilities, DB connection, auth config
-├── models/               # Mongoose models
-├── services/             # Business logic layer
-└── types/                # TypeScript type definitions
-```
-
----
-
-## ☁️ Deploying to Vercel
-
-1. Push your code to GitHub
-2. Import the repo at [vercel.com/new](https://vercel.com/new)
-3. Add all environment variables from `.env.example`
-4. Set `NEXTAUTH_URL` to your Vercel deployment URL
-5. Deploy
-
-> **MongoDB Atlas:** Make sure to allow all IPs (`0.0.0.0/0`) under Network Access so Vercel can connect.
 
 ---
 
