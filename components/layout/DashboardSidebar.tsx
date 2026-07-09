@@ -134,7 +134,7 @@ export function DashboardSidebar() {
       .then((data) => {
         if (data.success) setUnreadMessages(data.data.count);
       })
-      .catch((err) => console.error("Failed to fetch message count:", err));
+      .catch(() => console.error("Failed to fetch message count"));
   }, []);
 
   return (

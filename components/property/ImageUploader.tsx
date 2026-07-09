@@ -75,15 +75,6 @@ export function ImageUploader({
           throw new Error("Cloudinary configuration missing. Please check environment variables.");
         }
 
-        // Log upload parameters for debugging
-        console.log("Upload parameters:", {
-          cloud_name,
-          upload_preset,
-          file: file.name,
-          fileSize: file.size,
-          fileType: file.type,
-        });
-
         // Upload to Cloudinary (unsigned)
         const formData = new FormData();
         formData.append("file", file);
@@ -99,24 +90,13 @@ export function ImageUploader({
         );
 
         if (!uploadRes.ok) {
-          // Log the full error response from Cloudinary
-          let errorData: any = {};
+          let errorData: { error?: { message?: string }; message?: string } = {};
           const responseText = await uploadRes.text();
-          
           try {
             errorData = JSON.parse(responseText);
-          } catch (e) {
-            errorData = { raw: responseText };
+          } catch {
+            errorData = {};
           }
-          
-          console.error("Cloudinary upload failed:", {
-            status: uploadRes.status,
-            statusText: uploadRes.statusText,
-            errorData,
-            file: file.name,
-            responseText: responseText.substring(0, 500), // First 500 chars
-          });
-          
           const errorMessage = errorData.error?.message || errorData.message || uploadRes.statusText || "Unknown error";
           throw new Error(`Failed to upload ${file.name}: ${errorMessage}`);
         }
@@ -131,10 +111,7 @@ export function ImageUploader({
 
       onChange([...images, ...uploadedImages]);
     } catch (err) {
-      console.error("Upload error:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to upload images"
-      );
+      setError(err instanceof Error ? err.message : "Failed to upload images");
     } finally {
       setUploading(false);
       // Reset input

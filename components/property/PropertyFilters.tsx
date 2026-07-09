@@ -58,7 +58,7 @@ export function PropertyFilters({
           setCategories(data.data);
         }
       })
-      .catch((err) => console.error("Failed to fetch categories:", err));
+      .catch(() => console.error("Failed to fetch categories"));
   }, []);
 
   // Sync filters to URL
