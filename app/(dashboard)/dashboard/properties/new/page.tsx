@@ -3,16 +3,16 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-
-const PropertyForm = dynamic(
-  () => import("@/components/property/PropertyForm").then((m) => m.PropertyForm),
-  { ssr: false, loading: () => <div className="min-h-[600px] bg-muted rounded animate-pulse" /> }
-);
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { z } from "zod";
 import { propertyBaseSchema } from "@/types/property";
+
+const PropertyForm = dynamic(
+  () => import("@/components/property/PropertyForm").then((m) => m.PropertyForm),
+  { ssr: false, loading: () => <div className="min-h-[600px] bg-muted rounded animate-pulse" /> }
+);
 
 type PropertyFormData = z.infer<typeof propertyBaseSchema>;
 

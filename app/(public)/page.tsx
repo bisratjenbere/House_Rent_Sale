@@ -162,6 +162,7 @@ export default async function HomePage() {
                 fill
                 className="object-cover"
                 priority
+                sizes="(max-width: 1024px) 100vw, 50vw"
               />
               <div className="absolute inset-0 bg-primary/10" />
             </div>
