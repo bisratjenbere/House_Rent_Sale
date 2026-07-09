@@ -21,8 +21,9 @@ function getRedisClient(): Redis {
 export function getClientIp(request: NextRequest): string {
   const forwardedFor = request.headers.get('x-forwarded-for');
   if (forwardedFor) {
-    // x-forwarded-for can be a comma-separated list; take the first IP
-    return forwardedFor.split(',')[0].trim();
+    // Take the LAST IP — added by the trusted edge proxy (Vercel), not user-controlled
+    const ips = forwardedFor.split(',').map((ip) => ip.trim());
+    return ips[ips.length - 1];
   }
 
   const realIp = request.headers.get('x-real-ip');
@@ -30,7 +31,6 @@ export function getClientIp(request: NextRequest): string {
     return realIp.trim();
   }
 
-  // Fallback to a placeholder (should not happen in production with proper proxy config)
   return 'unknown';
 }
 

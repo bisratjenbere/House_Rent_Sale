@@ -79,7 +79,6 @@ export async function cleanupOrphanedImages(
   for (const image of removedImages) {
     try {
       await cloudinary.uploader.destroy(image.publicId);
-      console.log(`Deleted Cloudinary image: ${image.publicId}`);
     } catch (error) {
       // Log and continue - don't let individual Cloudinary failures block the operation
       console.error(`Failed to delete Cloudinary image ${image.publicId}:`, error);

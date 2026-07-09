@@ -40,12 +40,10 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // System information
+    // System information — no sensitive internals exposed
     const systemInfo = {
-      nodeVersion: process.version,
-      platform: process.platform,
-      environment: process.env.NODE_ENV || 'development',
-      databaseStatus: 'connected', // If we got here, DB is connected
+      environment: process.env.NODE_ENV || 'production',
+      databaseStatus: 'connected',
     };
 
     return NextResponse.json({

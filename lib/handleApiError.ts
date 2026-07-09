@@ -14,7 +14,7 @@ import {
  * @returns NextResponse with appropriate status and error message
  */
 export function handleApiError(error: unknown): NextResponse {
-  console.error('API Error:', error);
+  console.error('API Error:', error instanceof Error ? error.message : String(error));
 
   // Not Found - 404
   if (error instanceof NotFoundError) {

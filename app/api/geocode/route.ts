@@ -12,10 +12,23 @@ const NOMINATIM_BASE = 'https://nominatim.openstreetmap.org';
 // GET /api/geocode?lat=9.03&lng=38.76 - Reverse geocode (coordinates -> address)
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting: 30 req/min per IP
+    const { checkRateLimit, getClientIp } = await import('@/lib/rate-limit');
+    const ip = getClientIp(request);
+    const rl = await checkRateLimit(ip, 30, 60, 'geocode');
+    if (!rl.success) {
+      return NextResponse.json({ success: false, error: rl.error }, { status: 429 });
+    }
+
     const { searchParams } = new URL(request.url);
     const address = searchParams.get('q');
     const lat = searchParams.get('lat');
     const lng = searchParams.get('lng');
+
+    // Validate lat/lng are numeric before interpolating into URL
+    if ((lat !== null || lng !== null) && (isNaN(Number(lat)) || isNaN(Number(lng)))) {
+      return NextResponse.json({ success: false, error: 'Invalid coordinates' }, { status: 400 });
+    }
 
     let url: string;
     
