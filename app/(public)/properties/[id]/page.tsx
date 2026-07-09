@@ -12,7 +12,7 @@ import { MessageForm } from "@/components/property/MessageForm";
 
 const ReviewsSection = dynamic(
   () => import("@/components/property/ReviewsSection").then((m) => m.ReviewsSection),
-  { ssr: false, loading: () => <div className="min-h-[200px] bg-muted rounded animate-pulse" /> }
+  { loading: () => <div className="min-h-[200px] bg-muted rounded animate-pulse" /> }
 );
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
