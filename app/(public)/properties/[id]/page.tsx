@@ -6,9 +6,14 @@ import Link from "next/link";
 import { PropertyTypeBadge } from "@/components/property/PropertyTypeBadge";
 import { PriceDisplay } from "@/components/property/PriceDisplay";
 import { FavoriteButton } from "@/components/property/FavoriteButton";
+import dynamic from "next/dynamic";
 import { PropertyMapSection } from "@/components/property/PropertyMapSection";
 import { MessageForm } from "@/components/property/MessageForm";
-import { ReviewsSection } from "@/components/property/ReviewsSection";
+
+const ReviewsSection = dynamic(
+  () => import("@/components/property/ReviewsSection").then((m) => m.ReviewsSection),
+  { ssr: false, loading: () => <div className="min-h-[200px] bg-muted rounded animate-pulse" /> }
+);
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
