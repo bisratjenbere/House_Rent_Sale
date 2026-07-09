@@ -12,19 +12,13 @@ import {
   Star,
   TrendingUp 
 } from 'lucide-react'
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
+import dynamic from 'next/dynamic'
 import type { AnalyticsData } from '@/types/analytics'
 
-// Status colors matching design system
-const STATUS_COLORS: Record<string, string> = {
-  draft: 'hsl(var(--muted))',
-  pending_review: 'hsl(38 48% 48%)', // accent color
-  published: 'hsl(158 32% 24%)', // primary color
-  rejected: 'hsl(0 62% 42%)', // destructive color
-  rented: 'hsl(158 28% 45%)', // lighter primary
-  sold: 'hsl(15 45% 40%)', // sale color
-  archived: 'hsl(30 6% 42%)', // muted-foreground
-}
+const StatusPieChart = dynamic(
+  () => import('./StatusPieChart').then((m) => m.StatusPieChart),
+  { ssr: false, loading: () => <div className="h-[300px] bg-muted animate-pulse rounded" /> }
+)
 
 const STATUS_LABELS: Record<string, string> = {
   draft: 'Draft',
@@ -252,36 +246,7 @@ export default function AdminAnalyticsPage() {
         </CardHeader>
         <CardContent>
           {chartData.length > 0 ? (
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`
-                  }
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={STATUS_COLORS[entry.status] || '#999'}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip
-                  formatter={(value) => [
-                    `${Number(value).toLocaleString()} properties`,
-                    'Count',
-                  ]}
-                />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <StatusPieChart data={chartData} />
           ) : (
             <div className="flex items-center justify-center h-[300px] text-muted-foreground">
               No property data available

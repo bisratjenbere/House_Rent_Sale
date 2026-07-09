@@ -156,6 +156,7 @@ export default async function PropertyDetailPage({
                     alt={`${property.title} - Image ${index + 2}`}
                     fill
                     className="object-cover"
+                    sizes="(max-width: 768px) 100vw, 25vw"
                   />
                 </div>
               ))}
