@@ -33,7 +33,6 @@ export async function notifyAllAdmins(payload: NotificationPayload): Promise<num
   }));
 
   const result = await Notification.insertMany(notifications);
-  console.log(`Created ${result.length} admin notifications`);
   return result.length;
 }
 

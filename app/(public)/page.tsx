@@ -9,7 +9,8 @@ import { PropertyGrid } from "@/components/property/PropertyGrid";
 import { connectDB } from "@/lib/db";
 import { Property, Category } from "@/models";
 
-export const dynamic = 'force-dynamic';
+// Revalidate every 5 minutes — balances freshness with DB load
+export const revalidate = 300;
 
 interface Category {
   _id: string;

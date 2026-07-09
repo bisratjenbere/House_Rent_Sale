@@ -103,7 +103,7 @@ export default function ContactPage() {
                 <div>
                   <h3 className="font-semibold text-foreground mb-1">Phone</h3>
                   <p className="text-sm text-muted-foreground">
-                    +251 11 XXX XXXX
+                    +251 91 234 5678
                   </p>
                 </div>
               </div>
