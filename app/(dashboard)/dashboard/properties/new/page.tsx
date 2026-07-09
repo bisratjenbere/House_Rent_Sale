@@ -24,12 +24,6 @@ export default function NewPropertyPage() {
     setNotification(null);
 
     try {
-      // Debug: Log the form data being submitted
-      console.log('=== FORM DATA BEING SUBMITTED ===');
-      console.log('Images count:', data.images?.length || 0);
-      console.log('Images data:', JSON.stringify(data.images, null, 2));
-      console.log('Full data:', JSON.stringify(data, null, 2));
-      
       // Create the property
       const createResponse = await fetch("/api/properties", {
         method: "POST",

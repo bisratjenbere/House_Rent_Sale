@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Home, TrendingUp, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -154,8 +155,15 @@ export default async function HomePage() {
                 </Button>
               </div>
             </div>
-            <div className="relative h-[300px] lg:h-[500px] rounded-lg bg-gradient-to-br from-primary/20 via-accent/20 to-primary/10 shadow-lg flex items-center justify-center">
-              <Home className="h-32 w-32 text-primary/30" />
+            <div className="relative h-[300px] lg:h-[500px] rounded-lg overflow-hidden shadow-lg">
+              <Image
+                src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&q=80"
+                alt="Modern apartment building"
+                fill
+                className="object-cover"
+                priority
+              />
+              <div className="absolute inset-0 bg-primary/10" />
             </div>
           </div>
         </div>

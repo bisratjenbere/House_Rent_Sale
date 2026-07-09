@@ -86,7 +86,7 @@ function VerifyEmailContent() {
             </Link>
             <p className="text-sm text-muted-foreground">
               Need a new verification link?{' '}
-              <Link href="/login" className="text-primary hover:underline">
+              <Link href="/resend-verification" className="text-primary hover:underline">
                 Resend verification email
               </Link>
             </p>

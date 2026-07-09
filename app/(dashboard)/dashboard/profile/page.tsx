@@ -393,7 +393,12 @@ export default function ProfilePage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => reset()}
+                onClick={() => reset({
+                  name: profile?.name || '',
+                  phone: profile?.phone || '',
+                  bio: profile?.bio || '',
+                  avatar: profile?.avatar || '',
+                })}
                 disabled={isSubmitting}
               >
                 Reset
